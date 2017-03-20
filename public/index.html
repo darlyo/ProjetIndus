@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Bootstrap 101 Template</title>
+
+	<link href="stylesheets/style.css" rel="stylesheet"> 
+	<script src="javascripts/jquery-3.1.1.js"></script>
+    <link href="stylesheets/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap -->
+	<script src="javascripts/bootstrap.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  
+  <body>
+  
+    <h1>Projet Industriel TenderLift</h1>
+	
+	<div class="container">
+	  <div class="row">
+		<div class="col-md-6 col-xs-6"> Nom bateau </div>
+		<div class="col-md-6 col-xs-6"> 
+			<button id="authButton" type="button" value = "Authentification" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> <!---- MODAL AUTH -->
+				Authentification
+			</button>
+			<button class="btn btn-primary" disabled="disabled" id="disconnectButton"> Déconnexion </button>
+			<div class="modal fade" tabindex="-1" role="dialog" id="modalAuth">
+			  <div class="modal-dialog" role="document">
+				<div class="modal-content">
+				  <div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Authentification </h4>
+				  </div>
+				  <div class="modal-body">			<!-- modal Body -->
+					<label for="usr">Name:</label>
+					<input type="text" class="form-control" id="usr">
+					<label for="pwd">Password:</label>
+					<input type="password" class="form-control" id="pwd">
+				  </div>		<!-- modal Body -->
+				  <div class="modal-footer">
+				  <button type="button" class="btn btn-secondary" data-dismiss="modal" id="inviteButton">Invité</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" id="sendButon">Send</button>
+				  </div>
+				</div>		<!-- /.modal-content -->
+			  </div>		<!-- /.modal-dialog -->
+			</div>			<!-- /.modal -->	  
+		</div>				
+	  </div>
+	  
+	  
+	  <div class="row">
+		<div class="col-md-6 col-xs-6">Controles 1 </br>
+			<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled">Flèche Haut</button> </br>
+			<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">Flèche Bas</button> 
+		</div>
+		<div class="col-md-6 col-xs-6">Moteur
+		<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > </div> </br>
+			<div class="col-md-6 col-xs-6">Temperature
+		<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > </div>
+	  </div>
+	  
+	  
+	  <div class="row">
+		<div class="col-md-6 col-xs-6">Controles 2 </div>
+		<label> Pression en bar : </label>
+		<label id="pression"> 0.0 </label>
+	  </div>
+	  
+	  
+	   <div class="row">
+		<div class="col-md-6 col-xs-6">Information-Contact </div>
+		<div class="col-md-6 col-xs-6"> Tenderlift - +33 (0)4 68 73 59 12 - Canet - 66</div>
+	  </div>
+	</div>
+	
+	
+	<script>
+	var socket;
+	var socketAdmin;
+	
+	$('#flecheHaut').on('mousedown', function() {
+		$('#flecheHaut').attr('class','btn btn-secondary');
+		$.post("http://localhost:3300/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json -->
+		function callbackPost(data, status){
+			console.log(status);
+			console.log(data.success);
+			if(status == "success")
+			{
+				if(data.success)
+				{
+					console.log("success post Haut");
+				}
+				else
+				{
+					console.log("fail post Haut");
+				}
+			}
+		}
+	}).on('mouseup mouseleave', function() {
+		$('#flecheHaut').attr('class','btn btn-primary');
+		$.post("http://localhost:3300/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+	});
+
+	$('#flecheBas').on('mousedown', function() {
+		$('#flecheBas').attr('class','btn btn-secondary');
+		$.post("http://localhost:3300/monterPasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
+		function callbackPost(data, status){
+			console.log(status);
+			console.log(data.success);
+			if(status == "success")
+			{
+				if(data.success)
+				{
+					console.log("success post Bas");
+				}
+				else
+				{
+					console.log("success post Bas");
+				}
+			}
+		}
+	}).on('mouseup mouseleave', function() {
+		$('#flecheBas').attr('class','btn btn-primary');
+		$.post("http://localhost:3300/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+	});
+	
+	$('#sendButon').on('click', function(){		<!-- Send button modal Auth -->
+		var userName = $('#usr').val();
+		var userPwd = $('#pwd').val();
+		
+		$.post("http://localhost:3300/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
+		function callbackPost(data, status){
+			console.log(status);
+			console.log(data.success);
+			if(status == "success")
+			{
+				if(data.success)
+				{	
+					socket = io.connect('http://localhost:3300');				<!-- Connexion Socket -->
+				
+					console.log("success sendButton");
+					document.getElementById('flecheHaut').disabled = '';
+					document.getElementById('flecheBas').disabled = '';
+					document.getElementById('disconnectButton').disabled = '';
+					document.getElementById('authButton').disabled = 'disabled';
+
+					window.open('popUpUserAdmin.html','height=500 width=500,top=5,left=t,resible=no');
+					
+					socket.on('message', function(message) {							<!-- Msg connexion -->
+						//alert('Le serveur a un message pour vous : ' + message.content);
+						console.log(message.content);
+					})
+					
+					socket.on('update pression', function(message) {				<!-- Update pression via socket -->
+						//alert('pression : ' + message.pression);
+						console.log(message.pression);
+						$("#pression").html(message.pression);
+					})
+					
+					socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
+						//alert('moteur : ' + message.moteur);
+						console.log(message.moteur);
+						if(message.moteur == "on")
+						{
+							$('#ledMoteur').attr('src','images/ledVerte.png');
+						}
+						else if(message.moteur == "off")
+						{
+							$('#ledMoteur').attr('src','images/ledRouge.png');
+						}
+					})
+					
+					socket.on('temperature', function(message) {				<!-- Update temperature via socket -->
+						//alert('temperature : ' + message.temperature);		  
+						console.log(message.temperature);
+						if(message.temperature == "ok")
+						{
+							$('#ledTemperature').attr('src','images/ledVerte.png');
+						}
+						else if(message.temperature == "nok")
+						{
+							$('#ledTemperature').attr('src','images/ledRouge.png');
+						}
+					})
+				}
+				else
+				{
+					console.log("fail sendButton");
+				}
+			}
+		}
+	});
+	
+	$('#disconnectButton').on('click', function() {
+		document.getElementById('flecheHaut').disabled = 'disabled';
+		document.getElementById('flecheBas').disabled = 'disabled';
+		document.getElementById('authButton').disabled = '';
+		socket.close();
+	});
+	
+	$('#inviteButton').on('click', function(){						<!-- Monter passerelle button -->
+		$.post("http://localhost:3300/invite", {demande:true} ,callbackPost); <!-- post json -->
+		function callbackPost(data, status){
+			console.log(status);
+			console.log(data.success);
+			if(status == "success")
+			{
+				if(data.success)
+				{	
+					console.log("success sendButton");
+					document.getElementById('flecheHaut').disabled = '';
+					document.getElementById('flecheBas').disabled = '';
+					document.getElementById('disconnectButton').disabled = '';
+					document.getElementById('authButton').disabled = 'disabled';
+					
+					socket = io.connect('http://localhost:3300');			<!-- Connexion Socket -->
+		
+					socket.on('message', function(message) {							<!-- Msg connexion -->
+						//alert('Le serveur a un message pour vous : ' + message.content);
+						console.log(message.content);
+					})
+					
+					socket.on('update pression', function(message) {				<!-- Update pression via socket -->
+						//alert('pression : ' + message.pression);
+						$("#pression").html(message.pression);
+					})
+					
+					socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
+						//alert('moteur : ' + message.moteur);		  
+						if(message.moteur == "on")
+						{
+							$('#ledMoteur').attr('src','images/ledVerte.png');
+						}
+						else if(message.moteur == "off")
+						{
+							$('#ledMoteur').attr('src','images/ledRouge.png');
+						}
+					})
+					
+					socket.on('temperature', function(message) {				<!-- Update temperature via socket -->
+						//alert('temperature : ' + message.temperature);		  
+						if(message.temperature == "ok")
+						{
+							$('#ledTemperature').attr('src','images/ledVerte.png');
+						}
+						else if(message.temperature == "nok")
+						{
+							$('#ledTemperature').attr('src','images/ledRouge.png');
+						}
+					})
+				}
+				else
+				{
+					console.log("fail invite");
+				}
+			}
+		
+		}
+	}); 	
+	
+	
+	<!--$("#pression").html("150");-->
+
+	</script>
+  </body>
+</html>
