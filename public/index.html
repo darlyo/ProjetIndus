@@ -5,10 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Bootstrap 101 Template</title>
+    <title>Tenderlift</title>
 
 	<link href="stylesheets/style.css" rel="stylesheet"> 
+	<link href="stylesheets/navbar-fixed-top.css" rel="stylesheet">
+
+		
 	<script src="javascripts/jquery-3.1.1.js"></script>
+	
     <link href="stylesheets/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap -->
 	<script src="javascripts/bootstrap.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
@@ -22,66 +26,95 @@
   
   <body>
   
-    <h1>Projet Industriel TenderLift</h1>
-	
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Projet Industriel TenderLift</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#about">Admin</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+					<div id="divDisconnec" class="navbar-form navbar-right">
+              <button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth">  Déconnection </button>
+          </div>
+          <div id="divConnec" class="navbar-form navbar-right">
+              <button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth">
+              <i class="icon icon-user"></i>   Connection </button>
+          </div>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+		
 	<div class="container">
-	  <div class="row">
-		<div class="col-md-6 col-xs-6"> Nom bateau </div>
-		<div class="col-md-6 col-xs-6"> 
-			<button id="authButton" type="button" value = "Authentification" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> <!---- MODAL AUTH -->
-				Authentification
-			</button>
-			<button class="btn btn-primary" disabled="disabled" id="disconnectButton"> Déconnexion </button>
-			<div class="modal fade" tabindex="-1" role="dialog" id="modalAuth">
-			  <div class="modal-dialog" role="document">
-				<div class="modal-content">
-				  <div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">Authentification </h4>
-				  </div>
-				  <div class="modal-body">			<!-- modal Body -->
-					<label for="usr">Name:</label>
-					<input type="text" class="form-control" id="usr">
-					<label for="pwd">Password:</label>
-					<input type="password" class="form-control" id="pwd">
-				  </div>		<!-- modal Body -->
-				  <div class="modal-footer">
-				  <button type="button" class="btn btn-secondary" data-dismiss="modal" id="inviteButton">Invité</button>
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary" id="sendButon">Send</button>
-				  </div>
-				</div>		<!-- /.modal-content -->
-			  </div>		<!-- /.modal-dialog -->
-			</div>			<!-- /.modal -->	  
-		</div>				
-	  </div>
+		<div class="jumbotron">
 	  
 	  
 	  <div class="row">
-		<div class="col-md-6 col-xs-6">Controles 1 </br>
-			<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled">Flèche Haut</button> </br>
-			<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">Flèche Bas</button> 
-		</div>
-		<div class="col-md-6 col-xs-6">Moteur
-		<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > </div> </br>
+			<div class="col-md-6 col-xs-6">Controles 1 </br>
+				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled">Flèche Haut</button> </br>
+				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">Flèche Bas</button> 
+			</div>
+			<div class="col-md-6 col-xs-6">Moteur
+				<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
+			</div> 
+			</br>
 			<div class="col-md-6 col-xs-6">Temperature
-		<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > </div>
+				<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+			</div>
 	  </div>
 	  
 	  
 	  <div class="row">
-		<div class="col-md-6 col-xs-6">Controles 2 </div>
-		<label> Pression en bar : </label>
-		<label id="pression"> 0.0 </label>
+			<div class="col-md-6 col-xs-6">Controles 2 </div>
+			<label> Pression en bar : </label>
+			<label id="pression"> 0.0 </label>
 	  </div>
-	  
-	  
-	   <div class="row">
-		<div class="col-md-6 col-xs-6">Information-Contact </div>
-		<div class="col-md-6 col-xs-6"> Tenderlift - +33 (0)4 68 73 59 12 - Canet - 66</div>
 	  </div>
+
 	</div>
 	
+	<div class="container" id="contact" >
+	<div class="jumbotron">
+		<h2>Information-Contact</h2>      
+	  <p> Tenderlift - +33 (0)4 68 73 59 12 - Canet - 66</p>
+		
+	</div>
+	</div>
+
+	    
+			
+	<!---------- Modal ----------------->
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalAuth">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title">Authentification </h4>
+							</div>
+							<div class="modal-body">			<!-- modal Body -->
+								<label for="usr">Name:</label>
+								<input type="text" class="form-control" id="usr">
+								<label for="pwd">Password:</label>
+								<input type="password" class="form-control" id="pwd">
+							</div>		<!-- modal Body -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal" id="inviteButton">Invité</button>
+								<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+								<button type="button" class="btn btn-primary" id="sendButon">Send</button>
+							</div>
+						</div>		<!-- /.modal-content -->
+					</div>		<!-- /.modal-dialog -->
+				</div>			<!-- /.modal -->	  
 	
 	<script>
 	var socket;
