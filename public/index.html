@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+		
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Tenderlift</title>
 
@@ -44,12 +45,9 @@
             <li><a href="#about">Admin</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
-					<div id="divDisconnec" class="navbar-form navbar-right">
-              <button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth">  Déconnection </button>
-          </div>
-          <div id="divConnec" class="navbar-form navbar-right">
-              <button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth">
-              <i class="icon icon-user"></i>   Connection </button>
+					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
+						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connection </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Déconnection </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
@@ -58,26 +56,30 @@
 	<div class="container">
 		<div class="jumbotron">
 	  
-	  
+	  <h2> Controles 1 </h2>
 	  <div class="row">
-			<div class="col-md-6 col-xs-6">Controles 1 </br>
+			<center>
+			<div class="col-md-6 col-xs-6">
 				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled">Flèche Haut</button> </br>
 				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">Flèche Bas</button> 
 			</div>
-			<div class="col-md-6 col-xs-6">Moteur
-				<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
-			</div> 
-			</br>
-			<div class="col-md-6 col-xs-6">Temperature
-				<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
-			</div>
+			</center>
 	  </div>
 	  
-	  
+	  <h2> Controles 2 </h2>
 	  <div class="row">
-			<div class="col-md-6 col-xs-6">Controles 2 </div>
-			<label> Pression en bar : </label>
-			<label id="pression"> 0.0 </label>
+			<center>
+			<div class="col-md-4 col-xs-4">
+				<label> Pression en bar : </label>
+				<label id="pression"> 0.0 </label>
+			</div>
+			<div class="col-md-4 col-xs-4"> Moteur
+				<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
+			</div> 
+			<div class="col-md-4 col-xs-4">Temperature
+				<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+			</div>
+			</center>
 	  </div>
 	  </div>
 
@@ -85,9 +87,30 @@
 	
 	<div class="container" id="contact" >
 	<div class="jumbotron">
-		<h2>Information-Contact</h2>      
-	  <p> Tenderlift - +33 (0)4 68 73 59 12 - Canet - 66</p>
+	
+		<h2>Information-Contact</h2>  
 		
+		<div class="row">
+			<div class="col-md-6 col-xs-12">
+				<address>
+					<strong>Tenderlift, Inc.</strong><br>
+					Quai Santa Maria, <br>
+					66140 Canet-en-Roussillon<br>
+					<abbr title="Phone">P:</abbr> +33 (0)4 68 73 59 12<br>
+					<abbr title="Fax">Fax:</abbr> +33 (0)4 68 73 59 12
+				</address>
+			</div>
+
+			<div class="col-md-6 col-xs-12">
+				<address>
+					<strong>Contact</strong><br>
+					<span class="glyphicon glyphicon-envelope"></span><a href="mailto:#">  tenderlift@tenderlift.net</a><br>
+					<a href="http://www.tenderlift.net">  Site Web</a>
+				 
+				</address>
+			</div>
+		</div>
+
 	</div>
 	</div>
 
@@ -120,9 +143,11 @@
 	var socket;
 	var socketAdmin;
 	
+	var newURL = window.location.protocol + "//" + window.location.host;
+	
 	$('#flecheHaut').on('mousedown', function() {
 		$('#flecheHaut').attr('class','btn btn-secondary');
-		$.post("http://localhost:3300/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json -->
 		function callbackPost(data, status){
 			console.log(status);
 			console.log(data.success);
@@ -140,12 +165,12 @@
 		}
 	}).on('mouseup mouseleave', function() {
 		$('#flecheHaut').attr('class','btn btn-primary');
-		$.post("http://localhost:3300/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
 	});
 
 	$('#flecheBas').on('mousedown', function() {
 		$('#flecheBas').attr('class','btn btn-secondary');
-		$.post("http://localhost:3300/monterPasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/monterPasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
 		function callbackPost(data, status){
 			console.log(status);
 			console.log(data.success);
@@ -163,14 +188,14 @@
 		}
 	}).on('mouseup mouseleave', function() {
 		$('#flecheBas').attr('class','btn btn-primary');
-		$.post("http://localhost:3300/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
 	});
 	
 	$('#sendButon').on('click', function(){		<!-- Send button modal Auth -->
 		var userName = $('#usr').val();
 		var userPwd = $('#pwd').val();
 		
-		$.post("http://localhost:3300/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
 		function callbackPost(data, status){
 			console.log(status);
 			console.log(data.success);
@@ -178,7 +203,7 @@
 			{
 				if(data.success)
 				{	
-					socket = io.connect('http://localhost:3300');				<!-- Connexion Socket -->
+					socket = io.connect(newURL);				<!-- Connexion Socket -->
 				
 					console.log("success sendButton");
 					document.getElementById('flecheHaut').disabled = '';
@@ -241,7 +266,7 @@
 	});
 	
 	$('#inviteButton').on('click', function(){						<!-- Monter passerelle button -->
-		$.post("http://localhost:3300/invite", {demande:true} ,callbackPost); <!-- post json -->
+		$.post(newURL +"/invite", {demande:true} ,callbackPost); <!-- post json -->
 		function callbackPost(data, status){
 			console.log(status);
 			console.log(data.success);
@@ -255,7 +280,7 @@
 					document.getElementById('disconnectButton').disabled = '';
 					document.getElementById('authButton').disabled = 'disabled';
 					
-					socket = io.connect('http://localhost:3300');			<!-- Connexion Socket -->
+					socket = io.connect(newURL);			<!-- Connexion Socket -->
 		
 					socket.on('message', function(message) {							<!-- Msg connexion -->
 						//alert('Le serveur a un message pour vous : ' + message.content);
@@ -300,8 +325,6 @@
 		}
 	}); 	
 	
-	
-	<!--$("#pression").html("150");-->
 
 	</script>
   </body>
