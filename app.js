@@ -2,6 +2,7 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
+var net = require('net');
 
 // Variables reseau Can
 var HOST = '192.168.173.9';
@@ -195,6 +196,7 @@ app.get('/users', function(req,res){
 
 io.sockets.on('connection', function (socket) {
 
+//remplace l'ancient admin
 	if(socket.handshake.query['admin'] == "true")
 	{
 		if(authentified)
