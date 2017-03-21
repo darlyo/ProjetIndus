@@ -221,7 +221,7 @@ io.sockets.on('connection', function (socket) {
 	
 	socketU = socket;
 
-  console.log('Un client est connecté !');
+    console.log('Un client est connecté !');
 	numberOfConnexion += 1;
 	var now = new Date();
 	var annee   = now.getFullYear();
