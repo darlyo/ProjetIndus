@@ -16,7 +16,9 @@ div[class^="col-"] {
     
 }
 
+/* Classe */
 .decoButton{
 	
 	background-color: rgba(0, 0, 255, 0.15);
 }
+
