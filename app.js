@@ -1,15 +1,13 @@
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
-//var logger = require('morgan');
-//var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+// Variables reseau Can
+var HOST = '192.168.173.9';
+var PORT = 30000;
 
-//var index = require('./routes/index');
-//var users = require('./routes/users');
-//var img = require('./public/images');
-
+// Variables de connection
 var authentified = false;
 var numberOfConnexion = 0;
 var numberOfAdmin = 0;
@@ -19,12 +17,58 @@ var tabUser = [];
 var tabConnexion = [];
 var tabSocket = [];
 
+//Variables global
+var upState = false;
+var downState = false;
+var motor = 0;
+var temp = 1;
+var pres = 0;
+
+//Variables serveur
 var app = express();
 app.use(express.static('public'));
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
 
 var mysql = require('mysql');		// MySQL
+
+
+// Communication Can
+var client = new net.Socket();
+client.connect(PORT, HOST, function() {
+	console.log('Connected');
+});
+
+client.on('data', function(data) {
+	var dataHex = data.toString('hex');
+	console.log('Received: ' + dataHex);
+	var dlc = parseInt(dataHex.slice(2,4))-3;
+	var id = parseInt(dataHex.slice(4,10));
+	var msg =  dataHex.slice(10,10+dlc*2);
+	console.log('DLC: ' + dlc + '   ID: '+id+'   MSG: '+msg);
+	motor = parseInt(msg.slice(0,2));
+	temp = parseInt(msg.slice(2,4));
+	pres = swapEndianness(parseInt(msg.slice(4,12),16));
+	
+	console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
+
+	io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+	io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+	io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+});
+
+client.on('close', function() {
+	console.log('Connection closed');
+});
+client.on('connect', function() {
+	console.log('Connection etablie');
+});
+client.on('drain', function() {
+	console.log('Connection drain');
+});
+client.on('error', function() {
+	console.log('Connection error');
+});
 
 server.listen(3300);
 
@@ -49,26 +93,22 @@ app.get('/', function(req, res) {
 });
 
 app.post('/monterPasserelle', function(req, res){
-	var upState = req.body.up;
-	var downState = req.body.down;
+	upState = !upState;
+	downState = false;
 	
-	if(upState)
-	{
-		res.send({success:true});
-		//Envoi to PCL
-	}
+	sendCan(upState,downState);
+	res.send({success:true});
+	io.emit()
 });
 
 app.post('/descendrePasserelle', function(req, res){
-	var upState = req.body.up;
-	var downState = req.body.down;
+	upState = false;
+	downState = !downState;
 	
-	if(downState)
-	{
-		res.send({success:true});
-		//Envoi to PCL
-	}
+	sendCan(upState,downState);
+	res.send({success:true});
 });
+
 
 app.post('/authentification', function(req,res){
 	
@@ -177,7 +217,7 @@ io.sockets.on('connection', function (socket) {
 	
 	socketU = socket;
 
-    console.log('Un client est connecté !');
+  console.log('Un client est connecté !');
 	numberOfConnexion += 1;
 	var now = new Date();
 	var annee   = now.getFullYear();
@@ -187,11 +227,6 @@ io.sockets.on('connection', function (socket) {
 	var minute  = now.getMinutes();
 	
 	var dateUser = jour + '/' + mois + '/' + annee + ':' + heure + ':' + minute;
-	
-	io.emit('update pression', { pression: '206' });
-	io.emit('moteur', {moteur:'off' });
-	io.emit('temperature', { temperature: 'ok'});
-	io.emit('tenderlift', { position: 'droit'});
 	
 	var name = "User" + numberOfConnexion;
 
@@ -203,6 +238,12 @@ io.sockets.on('connection', function (socket) {
 	tabUser.push(name);
 	tabConnexion.push(dateUser);
 	tabSocket.push(socket);
+	
+	io.emit('update pression', { pression: pres.toString() });
+	io.emit('moteur', {moteur: motor==1?'on':'off' });
+	io.emit('temperature', { temperature: temp==1?'ok':'nok'});
+	io.emit('tenderlift', { position: 'droit'});
+	
 	
 	/*var mySqlClient = mysql.createConnection({
 		host     : "localhost",
@@ -236,6 +277,41 @@ io.sockets.on('connection', function (socket) {
 	
 });
 
+
+function sendCan(UP,DOWN){
+	var up = (UP?1:0).toString(16);
+	var down = (DOWN?1:0).toString(16);
+	var prefix = 0x4305;
+	var id = 1;
+	var suffix = 0x460d;
+	if(up == down)
+		suffix = 0x470d;
+	
+	// compute the required buffer length
+	var bufferSize = 2 + 3 + 2 + 2;
+	var buffer = new Buffer(bufferSize);
+
+	// store first byte on index 0;
+	buffer.writeUInt16BE(prefix, 0);
+	buffer.writeUIntBE(id, 2, 3);
+	buffer.writeUIntBE(up, 5, 1);
+	buffer.writeUIntBE(down, 6, 1);
+	buffer.writeUIntBE(suffix, 7, 2);
+
+	client.write(buffer,'data');
+	console.log('Send    : ' + buffer.toString('hex'));
+}
+
+function swapEndianness(v)
+{
+	var s = v.toString(16);             // translate to hexadecimal notation
+	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
+	var a = s.match(/../g);             // split number in groups of two
+	a.reverse();                        // reverse the groups
+	var s2 = a.join("");                // join the groups back together
+	var v2 = parseInt(s2, 16);          // convert to a number
+	return v2;
+}
 
 
 // catch 404 and forward to error handler
