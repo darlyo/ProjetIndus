@@ -64,6 +64,7 @@
 				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">Flèche Bas</button> 
 			</div>
 			<div class="col-md-8 col-xs-8">
+				<img src="images/TDL-1.png" class="img-responsive" id="tdl" width="450" height="300"  > 
 			</div>
 			</center>
 	  </div>
@@ -205,15 +206,15 @@
 			//alert('temperature : ' + message.temperature);		  
 			if(message.position == "montee")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_montee.png');
+				$('#tdl').attr('src','images/TDL-1.png');
 			}
 			else if(message.position == "descente")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_descente.png');
+				$('#tdl').attr('src','images/TDL-10.png');
 			}
 			else if(message.position == "droit")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_droit.png');
+				$('#tdl').attr('src','images/TDL-5.png');
 			}
 		})
 		
