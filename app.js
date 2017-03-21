@@ -56,6 +56,8 @@ client.on('data', function(data) {
 	io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
 	io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
 	io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+
 });
 
 client.on('close', function() {
@@ -244,7 +246,7 @@ io.sockets.on('connection', function (socket) {
 	io.emit('update pression', { pression: pres.toString() });
 	io.emit('moteur', {moteur: motor==1?'on':'off' });
 	io.emit('temperature', { temperature: temp==1?'ok':'nok'});
-	io.emit('tenderlift', { position: 'droit'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 	
 	
 	/*var mySqlClient = mysql.createConnection({
