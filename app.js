@@ -12,7 +12,9 @@ var bodyParser = require('body-parser');
 
 var authentified = false;
 var numberOfConnexion = 0;
+var numberOfAdmin = 0;
 var socketAdmin;
+var socketU;
 var tabUser = [];
 var tabConnexion = [];
 var tabSocket = [];
@@ -77,6 +79,7 @@ app.post('/authentification', function(req,res){
 	{
 		res.send({success:true});
 		authentified = true;
+		numberOfAdmin = 1;
 	}
 	else
 	{
@@ -88,20 +91,28 @@ app.post('/authentification', function(req,res){
 });
 
 
-app.post('/invite', function(req,res){
+app.post('/invite', function(req, res){
 	var response = req.body.demande;
 	
 	if(response)
 	{
+		res.send({ success: true });
 		socketAdmin.emit('newInvite', {demande:true});
+		socketU.emit('newInvite', {demande:true});
 		
 		console.log("emit");
 		
-		socketAdmin.on("inviteOk", function (data) {
-			res.send({success:true});
+		socketAdmin.on('inviteOk', function (data) {
+			console.log("envoi invite to admin ok");
+			io.emit('inviteOk', {demande:true});
+		});
+		
+		socketU.on('inviteOk', function (data) {
+			console.log("envoi invite ok");
+			io.emit('inviteOk', {demande:true});
 		});
 	}
-	else{
+	else {
 		//res.send({success:false});
 	}
 	
@@ -126,7 +137,7 @@ app.get('/users', function(req,res){
 	var tabUserBis = [];
 	var tabDateBis = [];
 	
-	for(var i = 0 ;i <tabUser.length; i++)
+	for(var i = 0; i <tabUser.length; i++)
 	{
 		if(tabUser[i] != null)
 		{
@@ -143,11 +154,28 @@ app.get('/users', function(req,res){
 // Quand un client se connecte, on le note dans la console
 
 io.sockets.on('connection', function (socket) {
-	
-	if(numberOfConnexion == 0)
+
+	if(socket.handshake.query['admin'] == "true")
 	{
-		socketAdmin = socket;
+		if(authentified)
+		{
+			if(numberOfAdmin > 0 && socketAdmin != null)
+			{
+				socketAdmin = socket;
+			}
+			else
+			{
+				socketAdmin = socket;
+				socketAdmin.on('disconnect', function () 
+				{
+					console.log("disconnect admin");
+					numberOfAdmin = 0;
+				});
+			}	
+		}
 	}
+	
+	socketU = socket;
 
     console.log('Un client est connecté !');
 	numberOfConnexion += 1;
@@ -160,15 +188,18 @@ io.sockets.on('connection', function (socket) {
 	
 	var dateUser = jour + '/' + mois + '/' + annee + ':' + heure + ':' + minute;
 	
-	socket.emit('message', { content: 'Vous êtes connecté !' });
-	socket.emit('update pression', { pression: '206' });
-	socket.emit('moteur', {moteur:'off' });
-	socket.emit('temperature', { temperature: 'ok'});
+	io.emit('update pression', { pression: '206' });
+	io.emit('moteur', {moteur:'off' });
+	io.emit('temperature', { temperature: 'ok'});
+	io.emit('tenderlift', { position: 'droit'});
 	
 	var name = "User" + numberOfConnexion;
-	
-	socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );
-	
+
+	if(socketAdmin != null)
+	{
+		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );
+	}
+
 	tabUser.push(name);
 	tabConnexion.push(dateUser);
 	tabSocket.push(socket);

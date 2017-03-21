@@ -53,77 +53,78 @@
 	<script>
 	
 	var socket;
-	var tabUserId = [];
-
-	$.get("http://localhost:3300/users",callbackGet); <!-- post json -->
-	function callbackGet(data, status){
 	
-			console.log(status);
-			if(status == "success")
-			{
-				console.log(data.users[0]);
-				console.log(data.dateConnexion[0]);
-
-				// Find a <table> element with id="myTable":
-				var table = document.getElementById("myTable");
-				// var table = $("#myTable");
-				
-				for(var i = 0; i< data.users.length;i++)
-				{
-					tabUserId.push((parseInt(data.users[i].split("User")[1]))-1);
-				}
-
-				for(var i =0; i < data.users.length; i++)
-				{
-					var row = table.insertRow(0);
-					row.setAttribute("id", "ligne"  + tabUserId[i], 0);
-					var cell1 = row.insertCell(0);
-					
-					cell1.innerHTML = data.users[i] + "           " + data.dateConnexion[i] + "    <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button>";
-				}
-			}
-		}
-		
-		
 	$(document).ready(function(){
-		
-		socket = io.connect('http://localhost:3300');
+	
+		socket = io.connect('http://localhost:3300', { query: "admin=except" });
 
-		socket.on('newInvite', function(message) {
-			alert("New invite");
+		socket.on('newInvite', function(message) {	
+			$.get("http://localhost:3300/users",callbackGet); <!-- post json -->
+			function callbackGet(data, status) {				
+					console.log(status);
+					if(status == "success")
+					{
+						var tabUserId = [];
+						console.log(data.users[0]);
+						console.log(data.dateConnexion[0]);
+
+						// Find a <table> element with id="myTable":
+						var table = document.getElementById("myTable");
+						// var table = $("#myTable");
+								
+						for(var i = 0; i< data.users.length;i++)
+						{
+							tabUserId.push((parseInt(data.users[i].split("User")[1]))-1);
+						}
+
+						for(var i =0; i < data.users.length; i++)
+						{
+							var row = table.insertRow(0);
+							row.setAttribute("id", "ligne"  + tabUserId[i], 0);
+							var cell1 = row.insertCell(0);
+									
+							cell1.innerHTML = data.users[i] + "           " + data.dateConnexion[i] + "    <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button>";
+						}
+					}
+				}	
+
 			var result = confirm("Nouvelle Connexion l'accepter ?");
 
-			if (result) {
-				socket.emit("inviteOk", {data:"invite"});
-			} else {
+			if (result) 
+			{
+				console.log("envoi invite ok to server");
+				socket.emit('inviteOk', {data:"invite"})
+			} 
+			else 
+			{
 				// Do nothing; they cancelled
 			}
-		})
-		
-        $(".decoButton").click(function() {
-			$("#ligne" + this.id).remove();
-            $.post("http://localhost:3300/decoUser", {id:this.id} ,callbackPost); <!-- post json -->
-		
-		function callbackPost(data, status){
-			console.log(status);
-			console.log(data.success);
 			
-			if(status == "success")
-			{
-				//data.success;
-				if(data.success)
-				{
-					console.log("success decoButton");
+			$('.decoButton').click(function() {
+				$("#ligne" + this.id).remove();
+				$.post("http://localhost:3300/decoUser", {id:this.id} ,callbackPost); <!-- post json -->
+				
+				function callbackPost(data, status){
+					console.log(status);
+					console.log(data.success);
+						
+					if(status == "success")
+					{
+						//data.success;
+						if(data.success)
+						{
+							console.log("success decoButton");
+						}
+						else
+						{
+							console.log("fail decoButton");
+						}
+					}
 				}
-				else
-				{
-					console.log("fail decoButton");
-				}
-			}
-		}
-        });
+			});
+		});
 	});
-	
+
 	</script>
   </body>
 </html>

@@ -81,6 +81,10 @@
 				<div class="col-md-2 col-xs-6">Temperature
 					<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
 				</div>
+				<div class="col-md-2 col-xs-6">
+					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
+				</div>
+				
 			</center>
 	  </div>
 	  </div>
@@ -147,10 +151,84 @@
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
 	
-	$('#flecheHaut').on('mousedown', function() {
-		$('#flecheHaut').attr('class','btn btn-secondary');
-		$.post(newURL +"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json -->
-		function callbackPost(data, status){
+	function degriserBoutons() 
+	{
+		document.getElementById('flecheHaut').disabled = '';
+		document.getElementById('flecheBas').disabled = '';
+		document.getElementById('disconnectButton').disabled = '';
+		document.getElementById('authButton').disabled = 'disabled';
+		
+		return 0;
+	}
+	
+	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
+	{
+		
+		socket.on('message', function(message) {							<!-- Msg connexion -->
+			//alert('Le serveur a un message pour vous : ' + message.content);
+			console.log(message.content);
+		})
+					
+		socket.on('update pression', function(message) {				<!-- Update pression via socket -->
+			//alert('pression : ' + message.pression);
+			console.log(message.pression);
+			$("#pression").html(message.pression);
+		})
+					
+		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
+			//alert('moteur : ' + message.moteur);
+			console.log(message.moteur);
+			if(message.moteur == "on")
+			{
+				$('#ledMoteur').attr('src','images/ledVerte.png');
+			}
+			else if(message.moteur == "off")
+			{
+				$('#ledMoteur').attr('src','images/ledRouge.png');
+			}
+		})
+					
+		socket.on('temperature', function(message) {				<!-- Update temperature -->
+			//alert('temperature : ' + message.temperature);		  
+			console.log(message.temperature);
+			if(message.temperature == "ok")
+			{
+				$('#ledTemperature').attr('src','images/ledVerte.png');
+			}
+			else if(message.temperature == "nok")
+			{
+				$('#ledTemperature').attr('src','images/ledRouge.png');
+			}
+		})
+		
+		socket.on('tenderlift', function(message) {				<!-- Update position tenderlift via socket -->
+			//alert('temperature : ' + message.temperature);		  
+			if(message.position == "montee")
+			{
+				$('#tenderlift').attr('src','images/tenderlift_montee.png');
+			}
+			else if(message.position == "descente")
+			{
+				$('#tenderlift').attr('src','images/tenderlift_descente.png');
+			}
+			else if(message.position == "droit")
+			{
+				$('#tenderlift').attr('src','images/tenderlift_droit.png');
+			}
+		})
+		
+		return 0;
+	}
+	
+	$('#flecheHaut').on('mousedown', function() 		<!-- POST : Monter Passerelle Clcik -->
+	{
+		if($('#controle').is(':checked'))
+		{
+			$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton -->
+			$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
+		}
+		function callbackPost(data, status)
+		{
 			console.log(status);
 			console.log(data.success);
 			if(status == "success")
@@ -165,15 +243,27 @@
 				}
 			}
 		}
-	}).on('mouseup mouseleave', function() {
-		$('#flecheHaut').attr('class','btn btn-primary');
-		$.post(newURL +"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+		
+		
+	}).on('mouseup', function() <!-- POST : Monter Passerelle release -->
+	{
+		if($('#controle').is(':checked'))
+		{
+			$('#flecheHaut').attr('class','btn btn-primary');
+			$.post(newURL+"/monterPasserelle", {up:false,down:false}); <!-- post json -->
+		}
 	});
 
-	$('#flecheBas').on('mousedown', function() {
-		$('#flecheBas').attr('class','btn btn-secondary');
-		$.post(newURL +"/monterPasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
-		function callbackPost(data, status){
+
+	$('#flecheBas').on('mousedown', function() 					<!-- POST : Descendre Passerelle click -->
+	{
+		if($('#controle').is(':checked'))
+		{
+			$('#flecheBas').attr('class','btn btn-secondary');
+			$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
+		}
+		function callbackPost(data, status)
+		{
 			console.log(status);
 			console.log(data.success);
 			if(status == "success")
@@ -188,69 +278,39 @@
 				}
 			}
 		}
-	}).on('mouseup mouseleave', function() {
-		$('#flecheBas').attr('class','btn btn-primary');
-		$.post(newURL +"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json -->
+	}).on('mouseup', function()							 <!-- POST : Descendre Passerelle release -->
+	{
+		if($('#controle').is(':checked'))
+		{
+			$('#flecheBas').attr('class','btn btn-primary');
+			$.post(newURL+"/descendrePasserelle", {up:false,down:false}); <!-- post json -->
+		}
 	});
 	
-	$('#sendButon').on('click', function(){		<!-- Send button modal Auth -->
+	$('#sendButon').on('click', function()			<!-- POST : Auth -->
+	{											<!-- Send button modal Auth -->
 		var userName = $('#usr').val();
 		var userPwd = $('#pwd').val();
 		
-		$.post(newURL +"/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
-		function callbackPost(data, status){
+		$.post(newURL+"/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
+		
+		function callbackPost(data, status)
+		{
 			console.log(status);
 			console.log(data.success);
 			if(status == "success")
 			{
 				if(data.success)
 				{	
-					socket = io.connect(newURL);				<!-- Connexion Socket -->
-				
+					socket = io.connect(newURL, { query: "admin=true" });				<!-- Connexion Socket -->
 					console.log("success sendButton");
-					document.getElementById('flecheHaut').disabled = '';
-					document.getElementById('flecheBas').disabled = '';
-					document.getElementById('disconnectButton').disabled = '';
-					document.getElementById('authButton').disabled = 'disabled';
-
-					window.open('popUpUserAdmin.html','height=500 width=500,top=5,left=t,resible=no');
 					
-					socket.on('message', function(message) {							<!-- Msg connexion -->
-						//alert('Le serveur a un message pour vous : ' + message.content);
-						console.log(message.content);
-					})
+					degriserBoutons();	
+					window.open('popUpUserAdmin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
 					
-					socket.on('update pression', function(message) {				<!-- Update pression via socket -->
-						//alert('pression : ' + message.pression);
-						console.log(message.pression);
-						$("#pression").html(message.pression);
-					})
+					connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
 					
-					socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
-						//alert('moteur : ' + message.moteur);
-						console.log(message.moteur);
-						if(message.moteur == "on")
-						{
-							$('#ledMoteur').attr('src','images/ledVerte.png');
-						}
-						else if(message.moteur == "off")
-						{
-							$('#ledMoteur').attr('src','images/ledRouge.png');
-						}
-					})
-					
-					socket.on('temperature', function(message) {				<!-- Update temperature via socket -->
-						//alert('temperature : ' + message.temperature);		  
-						console.log(message.temperature);
-						if(message.temperature == "ok")
-						{
-							$('#ledTemperature').attr('src','images/ledVerte.png');
-						}
-						else if(message.temperature == "nok")
-						{
-							$('#ledTemperature').attr('src','images/ledRouge.png');
-						}
-					})
+					$("#modalAuth").modal('hide');		<!-- ferme modal -->
 				}
 				else
 				{
@@ -260,62 +320,36 @@
 		}
 	});
 	
-	$('#disconnectButton').on('click', function() {
+	$('#disconnectButton').on('click', function() <!--- Deconnexion -->
+	{
 		document.getElementById('flecheHaut').disabled = 'disabled';
 		document.getElementById('flecheBas').disabled = 'disabled';
 		document.getElementById('authButton').disabled = '';
 		socket.close();
 	});
 	
-	$('#inviteButton').on('click', function(){						<!-- Monter passerelle button -->
-		$.post(newURL +"/invite", {demande:true} ,callbackPost); <!-- post json -->
-		function callbackPost(data, status){
+	$('#inviteButton').on('click', function()		<!-- INVITE ----------------------------------------------------------->
+	{						
+		$.post(newURL+"/invite", {demande:true} ,callbackPost); <!-- post json -->
+		
+		function callbackPost(data, status)
+		{
 			console.log(status);
 			console.log(data.success);
 			if(status == "success")
 			{
 				if(data.success)
 				{	
-					console.log("success sendButton");
-					document.getElementById('flecheHaut').disabled = '';
-					document.getElementById('flecheBas').disabled = '';
-					document.getElementById('disconnectButton').disabled = '';
-					document.getElementById('authButton').disabled = 'disabled';
+					socket = io.connect(newURL, { query: "admin=false" });			<!-- Connexion Socket -->
+					console.log("ok socket user invite");
 					
-					socket = io.connect(newURL);			<!-- Connexion Socket -->
-		
-					socket.on('message', function(message) {							<!-- Msg connexion -->
-						//alert('Le serveur a un message pour vous : ' + message.content);
-						console.log(message.content);
-					})
+					socket.on('inviteOk', function(message){
 					
-					socket.on('update pression', function(message) {				<!-- Update pression via socket -->
-						//alert('pression : ' + message.pression);
-						$("#pression").html(message.pression);
-					})
+						console.log("success inviteButton");
+						
+						degriserBoutons();
 					
-					socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
-						//alert('moteur : ' + message.moteur);		  
-						if(message.moteur == "on")
-						{
-							$('#ledMoteur').attr('src','images/ledVerte.png');
-						}
-						else if(message.moteur == "off")
-						{
-							$('#ledMoteur').attr('src','images/ledRouge.png');
-						}
-					})
-					
-					socket.on('temperature', function(message) {				<!-- Update temperature via socket -->
-						//alert('temperature : ' + message.temperature);		  
-						if(message.temperature == "ok")
-						{
-							$('#ledTemperature').attr('src','images/ledVerte.png');
-						}
-						else if(message.temperature == "nok")
-						{
-							$('#ledTemperature').attr('src','images/ledRouge.png');
-						}
+						connexionDataSocket(socket);		<!-- Connexion pour recevoir les données -->
 					})
 				}
 				else
@@ -323,10 +357,8 @@
 					console.log("fail invite");
 				}
 			}
-		
 		}
 	}); 	
-	
 
 	</script>
   </body>
