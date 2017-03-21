@@ -2,6 +2,7 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
+var net = require('net');
 
 // Variables reseau Can
 var HOST = '192.168.173.9';
@@ -217,7 +218,7 @@ io.sockets.on('connection', function (socket) {
 	
 	socketU = socket;
 
-  console.log('Un client est connecté !');
+    console.log('Un client est connecté !');
 	numberOfConnexion += 1;
 	var now = new Date();
 	var annee   = now.getFullYear();
