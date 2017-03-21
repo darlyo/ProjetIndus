@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 var net = require('net');
 
 // Variables reseau Can
-var HOST = '192.168.173.9';
+var HOST = '192.168.173.149';
 var PORT = 30000;
 
 // Variables de connection

@@ -42,7 +42,7 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">Admin</a></li>
+            <li><a id="btAdmin" href="#">Admin</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
@@ -153,6 +153,9 @@
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
 	
+	document.getElementById('btAdmin').herf = newURL + "/admin.html";
+	document.getElementById('flecheHaut').oncontextmenu = false;
+	document.getElementById('flecheBas').oncontextmenu = false;
 	
 	if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) 
 	{
@@ -318,7 +321,7 @@
 					console.log("success sendButton");
 					
 					degriserBoutons();	
-					window.open('popUpUserAdmin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
+					window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
 					
 					connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
 					
