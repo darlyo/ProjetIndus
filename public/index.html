@@ -61,8 +61,8 @@
 	  <div class="row ">
 			<center>
 			<div class="col-md-4 col-xs-4 ">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/haut.png"  width="40" /></button> </br></br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/bas.png" width="40" /></button> 
+				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/haut.png"  width="40" oncontextmenu="return false;"/></button> </br></br>
+				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/bas.png" width="40" oncontextmenu="return false;"/></button> 
 			</div>
 			<div class="col-md-8 col-xs-8">
 				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
@@ -73,15 +73,15 @@
 	  <h2> Controles 2 </h2>
 	  <div class="row">
 			<center>
-				<div class="col-md-2 col-xs-6">
-					<label> Pression en bar : </label>
-					<label id="pression"> 0.0 </label>
-				</div>
 				<div class="col-md-2 col-xs-6"> Moteur
 					<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
 				</div> 
 				<div class="col-md-2 col-xs-6">Temperature
 					<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+				</div>
+				<div class="col-md-2 col-xs-6">
+					<label> Pression en bar : </label>
+					<label id="pression"> 0.0 </label>
 				</div>
 				<div class="col-md-2 col-xs-6">
 					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
