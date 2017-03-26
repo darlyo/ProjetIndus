@@ -25,7 +25,7 @@
     <![endif]-->
   </head>
   
-  <body>
+  <body onload="init()">
   
     <!-- Fixed navbar -->
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -42,12 +42,12 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">Admin</a></li>
+            <li><a id="adminOnglet">Admin</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
 						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connection </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Déconnection </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal"> Déconnection </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
@@ -149,18 +149,41 @@
 	<script>
 	var socket;
 	var socketAdmin;
+	var isPc = false;
+	var isPortable = false;
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
 	
+	var isMobile = window.matchMedia("only screen and (max-width: 760px)");			// check if pc ou telephone
+    if (isMobile.matches) {
+        isPc = true;
+		isPortable = false;
+    }
+	else{
+		isPc = true;
+		isPortable = false;
+	}
 	
-	if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) 
-	{
-		console.log("Portable !");
-	}
-	else
-	{
-		console.log("PC !");
-	}
+		
+	/*function absorbEvent_(event) {					/// Desactiver click droit 
+      var e = event || window.event;
+      e.preventDefault && e.preventDefault();
+      e.stopPropagation && e.stopPropagation();
+      e.cancelBubble = true;
+      e.returnValue = false;
+      return false;
+    }
+
+    function preventLongPressMenu(node) {
+      node.ontouchstart = node.onclick;
+      node.ontouchmove = absorbEvent_;
+      node.ontouchend = absorbEvent_;
+      node.ontouchcancel = absorbEvent_;
+    }
+
+    function init() {
+      preventLongPressMenu(document.getElementById('flecheHaut'));
+    }*/
 	
 	function degriserBoutons() 
 	{
@@ -340,6 +363,13 @@
 		socket.close();
 	});
 	
+	$('#adminOnglet').on('click', function() <!--- switch onglet admin -->
+	{
+		//$("#tabs").tabs();
+		//$("#tabs").tabs("popUpUserAdmin.html", "active", 2);
+
+	});
+	
 	$('#inviteButton').on('click', function()		<!-- INVITE ----------------------------------------------------------->
 	{						
 		$.post(newURL+"/invite", {demande:true} ,callbackPost); <!-- post json -->
@@ -362,6 +392,16 @@
 						degriserBoutons();
 					
 						connexionDataSocket(socket);		<!-- Connexion pour recevoir les données -->
+					})
+					
+					socket.on('timeoutConnexion', function(message){			// if timeout Connexion
+					
+						alert("Deconnexion");
+						document.getElementById('flecheHaut').disabled = 'disabled';
+						document.getElementById('flecheBas').disabled = 'disabled';
+						document.getElementById('disconnectButton').disabled = 'disabled';
+						document.getElementById('authButton').disabled = '';
+						socket.close();
 					})
 				}
 				else

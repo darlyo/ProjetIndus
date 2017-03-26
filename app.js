@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 var net = require('net');
 
 // Variables reseau Can
-var HOST = '192.168.173.9';
+var HOST = '192.168.43.199';
 var PORT = 30000;
 
 // Variables de connection
@@ -24,6 +24,9 @@ var downState = false;
 var motor = 0;
 var temp = 1;
 var pres = 0;
+
+//timeout Connexion user
+var timeOutInvite = 60000; 		// milliseconde
 
 //Variables serveur
 var app = express();
@@ -174,6 +177,13 @@ app.post('/decoUser', function(req,res){
 	delete tabConnexion[idUser];
 });
 
+app.post('/deleteLastUser', function(req,res){
+	delete tabUser[tabUser.length-1];
+	delete tabConnexion[tabConnexion.lenght-1];
+	delete tabSocket[tabConnexion.lenght-1];
+});
+
+
 app.get('/users', function(req,res){
 	var tabUserBis = [];
 	var tabDateBis = [];
@@ -219,7 +229,6 @@ io.sockets.on('connection', function (socket) {
 	socketU = socket;
 
     console.log('Un client est connecté !');
-	numberOfConnexion += 1;
 	var now = new Date();
 	var annee   = now.getFullYear();
 	var mois    = now.getMonth() + 1;
@@ -235,10 +244,17 @@ io.sockets.on('connection', function (socket) {
 	{
 		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );
 	}
-
-	tabUser.push(name);
-	tabConnexion.push(dateUser);
-	tabSocket.push(socket);
+	
+	if(socket.handshake.query['admin'] != "true" && socket.handshake.query['admin'] != "except")	/* si c'est invite on le rajoute */
+	{
+		tabUser.push(name);
+		tabConnexion.push(dateUser);
+		tabSocket.push(socket);
+		console.log("invite coucou !");
+		numberOfConnexion += 1;
+		
+		setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function
+	}
 	
 	io.emit('update pression', { pression: pres.toString() });
 	io.emit('moteur', {moteur: motor==1?'on':'off' });
@@ -277,6 +293,14 @@ io.sockets.on('connection', function (socket) {
 	);*/
 	
 });
+
+function timeoutConnexion (socket) {
+  
+  if(socket != null)
+  {
+	  socket.emit('timeoutConnexion', {timeout:true});
+  }
+}
 
 
 function sendCan(UP,DOWN){
