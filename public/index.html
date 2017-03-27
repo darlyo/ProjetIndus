@@ -42,18 +42,36 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a id="adminOnglet" href="#">Admin</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li class="active"><a href="#"> 
+								<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+								Home</a></li>
+            <li><a id="adminOnglet" href="#"> 
+								<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+								Admin</a></li>
+            <li><a href="#contact"> 
+								<span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+								Contact</a></li>
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
-						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> Invité </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary"> Déconnection </button>						
-						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connecxion </button>
+						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> 
+								<span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+								Invité </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary">Déconnection </button>						
+						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> 
+								<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+								Connecxion </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
+		
+	<div class="container">
+		<div class="alert alert-danger" role="alert">
+		<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+		<span class="sr-only">Error:</span>
+		Enter a valid email address
+		</div>
+	</div>
 		
 	<div class="container">
 		<div class="jumbotron">
