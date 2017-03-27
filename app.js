@@ -47,21 +47,25 @@ client.connect(PORT, HOST, function() {
 client.on('data', function(data) {
 	var dataHex = data.toString('hex');
 	console.log('Received: ' + dataHex);
-	var dlc = parseInt(dataHex.slice(2,4))-3;
+	var size = dataHex.length;
 	var id = parseInt(dataHex.slice(4,10));
-	var msg =  dataHex.slice(10,10+dlc*2);
-	console.log('DLC: ' + dlc + '   ID: '+id+'   MSG: '+msg);
-	motor = parseInt(msg.slice(0,2));
-	temp = parseInt(msg.slice(2,4));
-	pres = swapEndianness(parseInt(msg.slice(4,12),16));
-	
-	console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
 
-	io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-	io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
-	io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
-	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+	if(( size == 16) && (id == 2 ))
+	{
+		var dlc = parseInt(dataHex.slice(2,4))-3;
+		var msg =  dataHex.slice(10,10+dlc*2);
+		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
+		motor = parseInt(msg.slice(0,2));
+		temp = parseInt(msg.slice(2,4));
+		pres = swapEndianness(parseInt(msg.slice(4,12),16));
+		
+		console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
 
+		io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+		io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+		io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+		io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+	}
 });
 
 client.on('close', function() {
