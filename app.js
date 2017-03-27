@@ -121,20 +121,48 @@ app.post('/authentification', function(req,res){
 	
 	var usrName = req.body.name;
 	var pwd = req.body.pwd;
-	
-	if(usrName == "admin" && pwd == "admin")
+
+	switch (usrName)
 	{
-		res.send({success:true});
-		authentified = true;
-		numberOfAdmin = 1;
+		case "admin":
+			if(pwd == "admin")
+			{
+				res.send({success:true});
+				authentified = true;
+				numberOfAdmin = 1;
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
+			
+		case "jeanJacque":
+			if(pwd == "jeanJacque")
+			{
+				res.send({success:true});
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
+		
+		
+		case "Benoit": 
+			if(pwd == "Benoit")
+			{
+				res.send({success:true});
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
 	}
-	else
-	{
-		res.send({success:false});
-		authentified = false;
-	}
-	
-	
 });
 
 

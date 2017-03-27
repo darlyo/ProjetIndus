@@ -47,8 +47,8 @@
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
 						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> Invité </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary"> Déconnection </button>						
-						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connecxion </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary"> Déconnexion </button>						
+						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connexion </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
@@ -160,11 +160,13 @@
         isPc = true;
 		isPortable = false;
     }
-	else{
+	else
+	{
 		isPc = true;
 		isPortable = false;
+	}
 
-	document.getElementById('btAdmin').herf = newURL + "/admin.html";
+	//document.getElementById('btAdmin').herf = newURL + "/admin.html";
 	document.getElementById('flecheHaut').oncontextmenu = false;
 	document.getElementById('flecheBas').oncontextmenu = false;
 	
@@ -340,15 +342,29 @@
 			{
 				if(data.success)
 				{	
-					socket = io.connect(newURL, { query: "admin=true" });				<!-- Connexion Socket -->
-					console.log("success sendButton");
-					
-					degriserBoutons();	
-					window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
-					
-					connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
-					
-					$("#modalAuth").modal('hide');		<!-- ferme modal -->
+					if(userName == "admin")
+					{
+						socket = io.connect(newURL, { query: "admin=true" });				<!-- Connexion Socket -->
+						console.log("success sendButton");
+						
+						degriserBoutons();	
+						window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
+						
+						connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
+						
+						$("#modalAuth").modal('hide');		<!-- ferme modal -->
+					}
+					else
+					{
+						socket = io.connect(newURL, { query: "admin=except" });				<!-- Connexion Socket -->
+						console.log("success sendButton for users");
+						
+						degriserBoutons();	
+						
+						connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
+						
+						$("#modalAuth").modal('hide');		<!-- ferme modal -->
+					}
 				}
 				else
 				{
@@ -356,6 +372,7 @@
 					$("#messageInfo").html("Erreur Authentification");
 				}
 			}
+			
 		}
 	});
 	
@@ -415,7 +432,6 @@
 			}
 		}
 	}); 	
-
 	</script>
   </body>
 </html>
