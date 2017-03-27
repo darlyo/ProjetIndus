@@ -49,65 +49,59 @@
 		<div class="col-md-6 col-xs-6"> Tenderlift - +33 (0)4 68 73 59 12 - Canet - 66</div>
 	  </div>
 	</div>
+	
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalAccept">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title">Accepter Invité </h4>
+							</div>
+							<div class="modal-body">			<!-- modal Body -->
+								<label for="usr">Accepter l'invité ? </label>
+							</div>		<!-- modal Body -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal" id="declineButton">Non</button>
+								<button type="button" class="btn btn-primary" id="acceptButton">Oui</button>
+							</div>
+						</div>		<!-- /.modal-content -->
+					</div>		<!-- /.modal-dialog -->
+				</div>		
 
 	<script>
 	
 	var socket;
 	
-	$(document).ready(function(){
-	
-		socket = io.connect('http://localhost:3300', { query: "admin=except" });
-
-		socket.on('newInvite', function(message) {	
-			$.get("http://localhost:3300/users",callbackGet); <!-- post json -->
-			function callbackGet(data, status) {				
-					console.log(status);
-					if(status == "success")
-					{
-						var tabUserId = [];
-						console.log(data.users[0]);
-						console.log(data.dateConnexion[0]);
-
-						// Find a <table> element with id="myTable":
-						var table = document.getElementById("myTable");
-						// var table = $("#myTable");
-								
-						for(var i = 0; i< data.users.length;i++)
-						{
-							tabUserId.push((parseInt(data.users[i].split("User")[1]))-1);
-						}
-
-						for(var i =0; i < data.users.length; i++)
-						{
-							var row = table.insertRow(0);
-							row.setAttribute("id", "ligne"  + tabUserId[i], 0);
-							var cell1 = row.insertCell(0);
-									
-							cell1.innerHTML = data.users[i] + "           " + data.dateConnexion[i] + "    <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button>";
-						}
-					}
-				}	
-
-			var result = confirm("Nouvelle Connexion l'accepter ?");
-
-			if (result) 
+	function refreshTabInvite()
+	{
+		$.get("http://localhost:3300/users",callbackGet); <!-- post json -->
+		function callbackGet(data, status) {				
+		console.log(status);
+		if(status == "success")
+		{
+			var tabUserId = [];
+			console.log(data.users[0]);
+			console.log(data.dateConnexion[0]);
+				
+			for(var i = 0; i< data.users.length;i++)
 			{
-				console.log("envoi invite ok to server");
-				socket.emit('inviteOk', {data:"invite"})
-			} 
-			else 
-			{
-				// Do nothing; they cancelled
+				tabUserId.push((parseInt(data.users[i].split("User")[1])));	// recup id user dans la chaine user23
 			}
-			
+			   var newRows = "";
+			   for (var i = 0; i < data.users.length; i++) {
+			   newRows += "<tr id=\"ligne" + (tabUserId[i])  + "\"" +  "><td>" + data.users[i] + " : " + 
+						  data.dateConnexion[i] + " <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button></td></tr>";
+			}
+			$("#myTable").append(newRows);
+							
 			$('.decoButton').click(function() {
 				$("#ligne" + this.id).remove();
 				$.post("http://localhost:3300/decoUser", {id:this.id} ,callbackPost); <!-- post json -->
-				
+							
 				function callbackPost(data, status){
 					console.log(status);
 					console.log(data.success);
-						
+									
 					if(status == "success")
 					{
 						//data.success;
@@ -122,9 +116,58 @@
 					}
 				}
 			});
-		});
-	});
+		}
+		}
+	}
+	
+	refreshTabInvite();
+	
+	socket = io.connect('http://localhost:3300', { query: "admin=except" });
 
+	socket.on('newInvite', function(message) {	
+
+		$("#modalAccept").modal('show');
+			
+		$('#acceptButton').on('click', function()			
+		{	
+			socket.emit('inviteOk', {data:"invite"});
+			$("#modalAccept").modal('hide');
+				
+			refreshTabInvite();
+			
+			window.location.reload();
+		});
+			
+		$('#declineButton').on('click', function()			<!-- decline : invite = on suppr le last invite -->
+		{	
+			$.post("http://localhost:3300/deleteLastUser", {user:"last"} ,callbackPost); <!-- post json -->
+							
+				function callbackPost(data, status){
+					console.log(status);
+					console.log(data.success);
+									
+					if(status == "success")
+					{
+						//data.success;
+						if(data.success)
+						{
+							console.log("success declineButton");
+						}
+						else
+						{
+							console.log("fail declineButton");
+						}
+					}
+				}
+
+			refreshTabInvite();
+			
+			window.location.reload();		// refresh page
+		});
+			
+			
+	});
+	
 	</script>
   </body>
 </html>
