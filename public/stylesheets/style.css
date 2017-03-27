@@ -25,3 +25,27 @@ div[class^="col-"] {
 img {
 	pointer-event : none;
 }
+
+.flecheHaut {
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0 25px 50px 25px;
+	border-color: transparent;
+	border-bottom-color : lime;
+	margin-bottom : 3px;
+	margin-top: 3px
+
+}
+ 
+.flecheBas {
+   width:0;
+	height: 0;
+	border-style: solid;
+	border-width: 50px 25px 0 25px;
+	border-color: transparent;
+	border-top-color : red;
+	margin-bottom : 3px;
+	margin-top: 3px
+
+}

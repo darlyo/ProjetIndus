@@ -61,8 +61,14 @@
 	  <div class="row ">
 			<center>
 			<div class="col-md-4 col-xs-4 ">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/haut.png"  width="40" oncontextmenu="return false;"/></button> </br></br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/bas.png" width="40" oncontextmenu="return false;"/></button> 
+				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
+					<!-- <img src="images/haut.png"  width="40" oncontextmenu="return false;"/>  -->
+					<div class="flecheHaut"></div>
+					</button> </br></br>
+				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
+					<!-- <img src="images/bas.png" width="40" oncontextmenu="return false;"/> -->
+					<div class="flecheBas"></div>
+				</button> 
 			</div>
 			<div class="col-md-8 col-xs-8">
 				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
@@ -163,11 +169,10 @@
 	else{
 		isPc = true;
 		isPortable = false;
-
-	document.getElementById('btAdmin').herf = newURL + "/admin.html";
+	/*
 	document.getElementById('flecheHaut').oncontextmenu = false;
 	document.getElementById('flecheBas').oncontextmenu = false;
-	
+	*/
 		
 	/*function absorbEvent_(event) {					/// Desactiver click droit 
       var e = event || window.event;
