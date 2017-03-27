@@ -42,12 +42,13 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a id="adminOnglet">Admin</a></li>
+            <li><a id="adminOnglet" href="#">Admin</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
-						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connection </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary" data-toggle="modal"> Déconnection </button>
+						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> Invité </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary"> Déconnection </button>						
+						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connecxion </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
@@ -57,13 +58,14 @@
 		<div class="jumbotron">
 	  
 	  <h2> Controles 1 </h2>
-	  <div class="row">
+	  <div class="row ">
 			<center>
-			<div class="col-md-4 col-xs-4">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/flecheHaut.jpg"  width="40" /></button> </br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/flecheBas.jpg" width="40" /></button> 
+			<div class="col-md-4 col-xs-4 ">
+				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/haut.png"  width="40" oncontextmenu="return false;"/></button> </br></br>
+				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/bas.png" width="40" oncontextmenu="return false;"/></button> 
 			</div>
 			<div class="col-md-8 col-xs-8">
+				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
 			</div>
 			</center>
 	  </div>
@@ -71,15 +73,15 @@
 	  <h2> Controles 2 </h2>
 	  <div class="row">
 			<center>
-				<div class="col-md-2 col-xs-6">
-					<label> Pression en bar : </label>
-					<label id="pression"> 0.0 </label>
-				</div>
 				<div class="col-md-2 col-xs-6"> Moteur
 					<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
 				</div> 
 				<div class="col-md-2 col-xs-6">Temperature
 					<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+				</div>
+				<div class="col-md-2 col-xs-6">
+					<label> Pression en bar : </label>
+					<label id="pression"> 0.0 </label>
 				</div>
 				<div class="col-md-2 col-xs-6">
 					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
@@ -138,7 +140,6 @@
 								<label id="messageInfo"> </label>
 							</div>		<!-- modal Body -->
 							<div class="modal-footer">
-								<button type="button" class="btn btn-secondary" data-dismiss="modal" id="inviteButton">Invité</button>
 								<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 								<button type="button" class="btn btn-primary" id="sendButon">Send</button>
 							</div>
@@ -162,7 +163,10 @@
 	else{
 		isPc = true;
 		isPortable = false;
-	}
+
+	document.getElementById('btAdmin').herf = newURL + "/admin.html";
+	document.getElementById('flecheHaut').oncontextmenu = false;
+	document.getElementById('flecheBas').oncontextmenu = false;
 	
 		
 	/*function absorbEvent_(event) {					/// Desactiver click droit 
@@ -239,15 +243,15 @@
 			//alert('temperature : ' + message.temperature);		  
 			if(message.position == "montee")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_montee.png');
+				$('#tdl').attr('src','images/monte.gif');
 			}
 			else if(message.position == "descente")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_descente.png');
+				$('#tdl').attr('src','images/descente.gif');
 			}
 			else if(message.position == "droit")
 			{
-				$('#tenderlift').attr('src','images/tenderlift_droit.png');
+				$('#tdl').attr('src','images/TDL-5.png');
 			}
 		})
 		
@@ -340,7 +344,7 @@
 					console.log("success sendButton");
 					
 					degriserBoutons();	
-					window.open('popUpUserAdmin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
+					window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
 					
 					connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
 					

@@ -5,7 +5,8 @@ var bodyParser = require('body-parser');
 var net = require('net');
 
 // Variables reseau Can
-var HOST = '192.168.43.199';
+
+var HOST = '192.168.173.246';
 var PORT = 30000;
 
 // Variables de connection
@@ -59,6 +60,8 @@ client.on('data', function(data) {
 	io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
 	io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
 	io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+
 });
 
 client.on('close', function() {
@@ -206,6 +209,7 @@ app.get('/users', function(req,res){
 
 io.sockets.on('connection', function (socket) {
 
+//remplace l'ancient admin
 	if(socket.handshake.query['admin'] == "true")
 	{
 		if(authentified)
@@ -259,7 +263,7 @@ io.sockets.on('connection', function (socket) {
 	io.emit('update pression', { pression: pres.toString() });
 	io.emit('moteur', {moteur: motor==1?'on':'off' });
 	io.emit('temperature', { temperature: temp==1?'ok':'nok'});
-	io.emit('tenderlift', { position: 'droit'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 	
 	
 	/*var mySqlClient = mysql.createConnection({
