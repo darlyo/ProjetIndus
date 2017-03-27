@@ -66,7 +66,7 @@
     </nav>
 		
 	<div class="container">
-		<div class="alert alert-danger" role="alert">
+		<div id="alert" class="alert alert-danger" role="alert">
 		<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
 		<span class="sr-only">Error:</span>
 		Enter a valid email address
@@ -181,13 +181,18 @@
 	var newURL = window.location.protocol + "//" + window.location.host;
 	
 	var isMobile = window.matchMedia("only screen and (max-width: 760px)");			// check if pc ou telephone
-    if (isMobile.matches) {
-        isPc = true;
+	if (isMobile.matches) {
+		isPc = true;
 		isPortable = false;
-    }
+	}
 	else{
 		isPc = true;
 		isPortable = false;
+	}
+	
+	document.getElementById("alert").className = "alert alert-success";
+	document.getElementById("alert").className = "alert alert-success";
+
 	/*
 	document.getElementById('flecheHaut').oncontextmenu = false;
 	document.getElementById('flecheBas').oncontextmenu = false;
@@ -284,6 +289,7 @@
 	
 	$('#flecheHaut').on('mousedown', function() 		<!-- POST : Monter Passerelle Clcik -->
 	{
+	
 		if($('#controle').is(':checked'))
 		{
 			$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton -->
@@ -306,9 +312,8 @@
 			}
 		}
 		
-		
 	}).on('mouseup', function() <!-- POST : Monter Passerelle release -->
-	{
+	{		
 		if($('#controle').is(':checked'))
 		{
 			$('#flecheHaut').attr('class','btn btn-primary');
