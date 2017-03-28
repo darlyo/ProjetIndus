@@ -72,84 +72,90 @@
 	
 	var socket;
 	var newURL = window.location.protocol + "//" + window.location.host;
-	
+//---------------------------------------------------------------------------------------- Fonction de mise à jour affichage des users	
 	function refreshTabInvite()
 	{
-		$.get(newURL +"/users",callbackGet); <!-- post json -->
-		function callbackGet(data, status) {				
-		console.log(status);
-		if(status == "success")
-		{
-			var tabUserId = [];
-			console.log(data.users[0]);
-			console.log(data.dateConnexion[0]);
-				
-			for(var i = 0; i< data.users.length;i++)
+		$.get(newURL +"/users",callbackGet);					// demande des users
+		
+		function callbackGet(data, status) 
+		{				
+			console.log(status);
+			if(status == "success")						// si requete ok on met a jour l'affichage
 			{
-				tabUserId.push((parseInt(data.users[i].split("User")[1])));	// recup id user dans la chaine user23
-			}
-			   var newRows = "";
-			   for (var i = 0; i < data.users.length; i++) {
-			   newRows += "<tr id=\"ligne" + (tabUserId[i])  + "\"" +  "><td>" + data.users[i] + " : " + 
-						  data.dateConnexion[i] + " <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button></td></tr>";
-			}
-			$("#myTable").append(newRows);
-							
-			$('.decoButton').click(function() {
-				$("#ligne" + this.id).remove();
-				$.post(newURL +"/decoUser", {id:this.id} ,callbackPost); <!-- post json -->
-							
-				function callbackPost(data, status){
-					console.log(status);
-					console.log(data.success);
-									
-					if(status == "success")
+				var tabUserId = [];
+				console.log(data.users[0]);
+				console.log(data.dateConnexion[0]);
+					
+				for(var i = 0; i< data.users.length;i++)
+				{
+					tabUserId.push((parseInt(data.users[i].split("User")[1])));	// recup id user dans la chaine User23 par exmple
+				}
+				
+				var newRows = "";									// prepare new row dans le tableau
+				for (var i = 0; i < data.users.length; i++) 				// pour chaque user on construit une ligne avec user dateConnexion et un boutton deconexion
+				{				
+					newRows += "<tr id=\"ligne" + (tabUserId[i])  + "\"" +  "><td>" + data.users[i] + " : " + 
+							data.dateConnexion[i] + " <button type=\"button\" class=\"decoButton\" id=\"" + tabUserId[i] + "\">Déconnecter</button></td></tr>";
+				}
+				
+				$("#myTable").append(newRows);				// ajout de la ligne
+								
+				$('.decoButton').click(function() 
+				{
+					$("#ligne" + this.id).remove();
+					$.post(newURL +"/decoUser", {id:this.id} ,callbackPost);			// Si admin deco user on post une suppression
+								
+					function callbackPost(data, status)
 					{
-						//data.success;
-						if(data.success)
+						console.log(status);
+						console.log(data.success);
+										
+						if(status == "success")
 						{
-							console.log("success decoButton");
-						}
-						else
-						{
-							console.log("fail decoButton");
+							if(data.success)
+							{
+								console.log("success decoButton");
+							}
+							else
+							{
+								console.log("fail decoButton");
+							}
 						}
 					}
-				}
-			});
+				});
+			}
 		}
-		}
-	}
+	} // fin fonction refreshTabInvite
 	
 	refreshTabInvite();
 	
-	socket = io.connect(newURL, { query: "admin=except" });
+	socket = io.connect(newURL, { query: "admin=except" });					// on connecte une socket non admin, user, ou invite
 
-	socket.on('newInvite', function(message) {	
-
-		$("#modalAccept").modal('show');
+	socket.on('newInvite', function(message) 						// quand un nouvel invite on demande accptation
+	{		
+		$("#modalAccept").modal('show');						// popup accept ou non invite
 			
 		$('#acceptButton').on('click', function()			
 		{	
-			socket.emit('inviteOk', {data:"invite"});
+			socket.emit('inviteOk', {data:"invite"});				// on envoie la confirmation accpte user
 			$("#modalAccept").modal('hide');
 				
 			refreshTabInvite();
 			
-			window.location.reload();
+			window.location.reload();				// refresh page html
 		});
 			
-		$('#declineButton').on('click', function()			<!-- decline : invite = on suppr le last invite -->
+		$('#declineButton').on('click', function()			// decline : invite = on suppr le last invite avec le post du user avec le dernier id
 		{	
-			$.post(newURL +"/deleteLastUser", {user:"last"} ,callbackPost); <!-- post json -->
+			$.post(newURL +"/deleteLastUser", {user:"last"} ,callbackPost);
 							
-				function callbackPost(data, status){
+				function callbackPost(data, status)
+				{
 					console.log(status);
 					console.log(data.success);
 									
 					if(status == "success")
 					{
-						//data.success;
 						if(data.success)
 						{
 							console.log("success declineButton");
@@ -164,11 +170,8 @@
 			refreshTabInvite();
 			
 			window.location.reload();		// refresh page
-		});
-			
-			
+		});	
 	});
-	
 	</script>
   </body>
 </html>
