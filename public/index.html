@@ -1,3 +1,16 @@
+
+	<script>
+	var socket;
+	var socketAdmin;
+	var isPc = false;
+	var isPortable = false;
+	var controleButtonPressed = false;
+	
+	var newURL = window.location.protocol + "//" + window.location.host;
+
+
+	</script>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -108,8 +121,7 @@
 					<label> Pression en bar : </label>
 					<label id="pression"> 0.0 </label>
 				</div>
-				<div class="col-md-2 col-xs-6">
-					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
+				<div class="col-md-2 col-xs-6" id="controle">
 				</div>
 				<div class="col-md-2 col-xs-6">
 					<p>MAX :1000</p>					
@@ -181,8 +193,9 @@
 							</div>
 						</div>		<!-- /.modal-content -->
 					</div>		<!-- /.modal-dialog -->
-				</div>			<!-- /.modal -->	  
-	
+				</div>			<!-- /.modal -->	   
+	</body>
+
 	<script>
 	var socket;
 	var socketAdmin;
@@ -190,47 +203,60 @@
 	var isPortable = false;
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
-	
-	var isMobile = window.matchMedia("only screen and (max-width: 760px)");			// check if pc ou telephone
-	if (isMobile.matches) {
-		isPc = true;
-		isPortable = false;
-	}
-	else{
-		isPc = true;
-		isPortable = false;
-	}
-	
+
 	document.getElementById("alert").className = "alert alert-success";
-	document.getElementById("alert").className = "alert alert-success";
+
 	var h = $('#gauge').height()/2+2;
 	var deg = 0;  /*  -45 to 225*/
 	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
 
-	/*
-	document.getElementById('flecheHaut').oncontextmenu = false;
-	document.getElementById('flecheBas').oncontextmenu = false;
-	*/
+//------------------------------------------------------------------------------------------------------------------------------- Check media
+    
+	if (window.Touch) {					
+        isPc = false;									// si portable on cree un bouton de sécurité 'homme mort'
+		isPortable = true;
+		$('#controle').append("<button type=\"button\" class=\"btn btn-primary\" id=\"controleButton\">Contrôle</button>");	
 		
-	/*function absorbEvent_(event) {					/// Desactiver click droit 
-      var e = event || window.event;
-      e.preventDefault && e.preventDefault();
-      e.stopPropagation && e.stopPropagation();
-      e.cancelBubble = true;
-      e.returnValue = false;
-      return false;
-    }
-
-    function preventLongPressMenu(node) {
-      node.ontouchstart = node.onclick;
-      node.ontouchmove = absorbEvent_;
-      node.ontouchend = absorbEvent_;
-      node.ontouchcancel = absorbEvent_;
-    }
-
-    function init() {
-      preventLongPressMenu(document.getElementById('flecheHaut'));
-    }*/
+		controlMouvement = document.getElementById('controleButton');
+		
+		controlMouvement.addEventListener('touchstart', function(e){				// listener pour activer la sécurité homme mort
+				controleButtonPressed =true;
+			})
+			
+		controlMouvement.addEventListener('touchend', function(e){
+				controleButtonPressed =false;
+				$('#flecheHaut').attr('class','btn btn-primary');								<!-- Changer couleur bouton on peut aussi avec le css ou attr de la balise -->
+				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 			<!-- post json puis callbackPost -->
+				$('#flecheBas').attr('class','btn btn-primary');		
+				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 
+			})
+			
+		controlMouvement.addEventListener('touchleave', function(e){
+				controleButtonPressed =false;
+				$('#flecheHaut').attr('class','btn btn-primary');		
+				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);
+				$('#flecheBas').attr('class','btn btn-primary');		
+				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
+			})
+			
+		controlMouvement.addEventListener('touchcancel', function(e){
+				controleButtonPressed =false;
+				$('#flecheHaut').attr('class','btn btn-primary');		
+				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 
+				$('#flecheBas').attr('class','btn btn-primary');
+				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
+			})
+	}
+	else
+	{											// Si c'est un pc on met une checkbox pour la securite homme mort
+		isPc = true;
+		isPortable = false;
+		$('#controle').append("<label><input type=\"checkbox\" value=\"\" id=\"controleCheck\" >Contrôle</label>");
+	}
+	
+//------------------------------------------------------------------------------------------------------------------------------------ Fonction diverses utiles
+	document.getElementById('flecheHaut').oncontextmenu = false;			// desactive menu contextuel lors d'appui long
+	document.getElementById('flecheBas').oncontextmenu = false;
 	
 	function degriserBoutons() 
 	{
@@ -240,6 +266,23 @@
 		document.getElementById('authButton').disabled = 'disabled';
 		
 		return 0;
+	}
+	
+	function callbackPost(data, status)						// callbackPost commun après chaque post
+	{
+		console.log(status);
+		console.log(data.success);
+		if(status == "success")
+		{
+			if(data.success)
+			{
+				console.log("success post Haut");
+			}
+			else
+			{
+				console.log("fail post Haut");
+			}
+		}
 	}
 	
 	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
@@ -261,7 +304,7 @@
 			console.log(message.moteur);
 			if(message.moteur == "on")
 			{
-				$('#ledMoteur').attr('src','images/ledVerte.png');
+				$('#ledMoteur').attr('src','images/ledVerte.png');					// changer attr d'une balise ici src pour changer image
 			}
 			else if(message.moteur == "off")
 			{
@@ -300,98 +343,131 @@
 		
 		return 0;
 	}
+
+//------------------------------------------------------------------------------------------------------------------------------------------ Fleche Haut
+	flecheH = document.getElementById('flecheHaut');
 	
-	$('#flecheHaut').on('mousedown', function() 		<!-- POST : Monter Passerelle Clcik -->
-	{
-	
-		if($('#controle').is(':checked'))
+	if (window.Touch)   													 // SI on est sur mobile 
+	{ 
+		flecheH.addEventListener('touchstart', function(e)					<!-- on verifie la securite avec button homme mort puis MONTER PASSERELLE -->
 		{
-			$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton -->
-			$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
-		}
-		function callbackPost(data, status)
-		{
-			console.log(status);
-			console.log(data.success);
-			if(status == "success")
+			if(controleButtonPressed)								// SI homme mort on monte la passerelle
 			{
-				if(data.success)
-				{
-					console.log("success post Haut");
-				}
-				else
-				{
-					console.log("fail post Haut");
-				}
+				$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton (gitan) on peut aussi avec css ou attr -->
+				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
 			}
-		}
+		});
+		  
+		flecheH.addEventListener('touchend', function(e)			// Si on arrete de monter
+		{
+			if(controleButtonPressed)
+			{
+				$('#flecheHaut').attr('class','btn btn-primary');		
+				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);		// arrêt montée
+			}
+	    });
+	}	
+	else														// Si on est sur pc 
+	{
+		$('#flecheHaut').on('mousedown', function() 		
+		{
+			if($('#controleCheck').is(':checked'))					// on verifie la securite avec checkbox puis POST : Monter Passerelle Click
+			{
+				$('#flecheHaut').attr('class','btn btn-secondary');							// Changer couleur bouton
+				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost);
+			}
+		}).on('mouseup', function()											 <!-- POST : Monter Passerelle release -->
+		{
+			if($('#controleCheck').is(':checked'))
+			{
+				$('#flecheHaut').attr('class','btn btn-primary');		<!-- Changer couleur bouton -->
+				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json puis callbackPost -->
+			}
+		});
+	}
+//--------------------------------------------------------------------------------------------------------------------------------------- Fleche bas
+	flecheB = document.getElementById('flecheBas');
+	
+	if (window.Touch) 											// on est sur mobile
+	{ 
+		flecheB.addEventListener('touchstart', function(e)					// Descendre PASSERELLE 
+		{
+			if(controleButtonPressed)									// Si securite on descend
+			{
+				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
+				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);
+			}
+		});
+		  
+		flecheB.addEventListener('touchend', function(e)				// Descendre Passerelle Release
+		{
+			if(controleButtonPressed)
+			{
+				$('#flecheBas').attr('class','btn btn-primary');		
+				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 		// on envoi arrêt
+			}
+	    });
+	}
+	else												// PC
+	{			
+		$('#flecheBas').on('mousedown', function() 		// POST : Descendre Passerelle
+		{
+			if($('#controleCheck').is(':checked'))			// si secutite checkbox activee
+			{
+				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
+				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);				// on post
+			}
+		}).on('mouseup', function() 						// POST : Descendre Passerelle release
+		{
+			if($('#controleCheck').is(':checked'))
+			{
+				$('#flecheBas').attr('class','btn btn-primary');
+				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);				// Arrêt
+			}
+		});
+	}
+
+	
 		
-	}).on('mouseup', function() <!-- POST : Monter Passerelle release -->
-	{		
-		if($('#controle').is(':checked'))
-		{
-			$('#flecheHaut').attr('class','btn btn-primary');
-			$.post(newURL+"/monterPasserelle", {up:false,down:false}); <!-- post json -->
-		}
-	});
-
-
-	$('#flecheBas').on('mousedown', function() 					<!-- POST : Descendre Passerelle click -->
-	{
-		if($('#controle').is(':checked'))
-		{
-			$('#flecheBas').attr('class','btn btn-secondary');
-			$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost); <!-- post json -->
-		}
-		function callbackPost(data, status)
-		{
-			console.log(status);
-			console.log(data.success);
-			if(status == "success")
-			{
-				if(data.success)
-				{
-					console.log("success post Bas");
-				}
-				else
-				{
-					console.log("success post Bas");
-				}
-			}
-		}
-	}).on('mouseup', function()							 <!-- POST : Descendre Passerelle release -->
-	{
-		if($('#controle').is(':checked'))
-		{
-			$('#flecheBas').attr('class','btn btn-primary');
-			$.post(newURL+"/descendrePasserelle", {up:false,down:false}); <!-- post json -->
-		}
-	});
-	
-	$('#sendButon').on('click', function()			<!-- POST : Auth -->
-	{											<!-- Send button modal Auth -->
+//---------------------------------------------------------------------------------------------------------------------------------------  Auth button modal
+	$('#sendButon').on('click', function()			// POST : Auth admin ou utilisateur
+	{											// Send button modal Auth
 		var userName = $('#usr').val();
 		var userPwd = $('#pwd').val();
 		
-		$.post(newURL+"/authentification", {name:userName,pwd:userPwd} ,callbackPost); <!-- post json -->
+		$.post(newURL+"/authentification", {name:userName,pwd:userPwd} ,callbackPostSend); <!-- post json -->
 		
-		function callbackPost(data, status)
+		function callbackPostSend(data, status)
 		{
 			console.log(status);
 			console.log(data.success);
-			if(status == "success")
+			if(status == "success")				// Si requete ok 
 			{
-				if(data.success)
+				if(data.success)				// Si donnees auth ok 
 				{	
-					socket = io.connect(newURL, { query: "admin=true" });				<!-- Connexion Socket -->
-					console.log("success sendButton");
-					
-					degriserBoutons();	
-					window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		<!-- pop-up admin -->
-					
-					connexionDataSocket(socket);			<!-- Connexion pour recevoir les données -->
-					
-					$("#modalAuth").modal('hide');		<!-- ferme modal -->
+					if(userName == "admin")		// Si on se connecte en admin on ouvre la popup admin
+					{
+						socket = io.connect(newURL, { query: "admin=true" });				// Connexion Socket admin
+						console.log("success sendButton");
+						
+						degriserBoutons();	
+						window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		// pop-up admin 
+						
+						connexionDataSocket(socket);			// Connexion pour recevoir les données 
+						
+						$("#modalAuth").modal('hide');		// ferme modal 
+					}
+					else				
+					{
+						socket = io.connect(newURL, { query: "admin=except" });				// Connexion Socket utilisateur tenderlift
+						console.log("success sendButton for users");
+						
+						degriserBoutons();	
+						
+						connexionDataSocket(socket);			// Connexion pour recevoir les données 
+						
+						$("#modalAuth").modal('hide');		// ferme modal
+					}
 				}
 				else
 				{
@@ -399,6 +475,7 @@
 					$("#messageInfo").html("Erreur Authentification");
 				}
 			}
+			
 		}
 	});
 	
@@ -410,44 +487,39 @@
 		socket.close();
 	});
 	
-	$('#adminOnglet').on('click', function() <!--- switch onglet admin -->
-	{
-		//$("#tabs").tabs();
-		//$("#tabs").tabs("popUpUserAdmin.html", "active", 2);
-
-	});
 	
-	$('#inviteButton').on('click', function()		<!-- INVITE ----------------------------------------------------------->
+	//---------------------------------------------------------------------------------------------------------------------- Invites	
+	$('#inviteButton').on('click', function()		// INVITE Button
 	{						
-		$.post(newURL+"/invite", {demande:true} ,callbackPost); <!-- post json -->
-		
-		function callbackPost(data, status)
+		$.post(newURL+"/invite", {demande:true} ,callbackPostSend); // post json 
+		function callbackPostSend(data, status)
 		{
 			console.log(status);
 			console.log(data.success);
-			if(status == "success")
+			if(status == "success")			// si requete ok
 			{
-				if(data.success)
+				if(data.success)			// si data ok 
 				{	
-					socket = io.connect(newURL, { query: "admin=false" });			<!-- Connexion Socket -->
+					socket = io.connect(newURL, { query: "admin=false" });			// Connexion Socket 
 					console.log("ok socket user invite");
 					
-					socket.on('inviteOk', function(message){
+					socket.on('inviteOk', function(message){					// Si l'admin est ok pour l'invite
 					
 						console.log("success inviteButton");
 						
 						degriserBoutons();
 					
-						connexionDataSocket(socket);		<!-- Connexion pour recevoir les données -->
+						connexionDataSocket(socket);		// Connexion pour recevoir les données 
 					})
 					
-					socket.on('timeoutConnexion', function(message){			// if timeout Connexion
-					
+					socket.on('timeoutConnexion', function(message)								// if timeout Connexion
+					{		
 						alert("Deconnexion");
 						document.getElementById('flecheHaut').disabled = 'disabled';
 						document.getElementById('flecheBas').disabled = 'disabled';
 						document.getElementById('disconnectButton').disabled = 'disabled';
 						document.getElementById('authButton').disabled = '';
+						document.getElementById('inviteButton').disabled = '';
 						socket.close();
 					})
 				}
@@ -460,5 +532,4 @@
 	}); 	
 
 	</script>
-  </body>
 </html>

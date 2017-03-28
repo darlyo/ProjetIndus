@@ -27,11 +27,11 @@ var temp = 1;
 var pres = 0;
 
 //timeout Connexion user
-var timeOutInvite = 60000; 		// milliseconde
+var timeOutInvite = 240000; 		// milliseconde
 
 //Variables serveur
 var app = express();
-app.use(express.static('public'));
+app.use(express.static('public'));		// dossier public pour client
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
 
@@ -91,7 +91,7 @@ server.listen(3300);
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(logger('dev'));
-app.use(bodyParser.json());
+app.use(bodyParser.json());								// communication json
 app.use(bodyParser.urlencoded({ extended: false }));
 //app.use(cookieParser());
 
@@ -103,7 +103,7 @@ app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));
 });
 
-app.post('/monterPasserelle', function(req, res){
+app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	upState = !upState;
 	downState = false;
 	
@@ -112,7 +112,7 @@ app.post('/monterPasserelle', function(req, res){
 	io.emit()
 });
 
-app.post('/descendrePasserelle', function(req, res){
+app.post('/descendrePasserelle', function(req, res){			// Descendre
 	upState = false;
 	downState = !downState;
 	
@@ -121,41 +121,69 @@ app.post('/descendrePasserelle', function(req, res){
 });
 
 
-app.post('/authentification', function(req,res){
+app.post('/authentification', function(req,res){				// Auth admin et utilisateurs tenderlift
 	
 	var usrName = req.body.name;
 	var pwd = req.body.pwd;
-	
-	if(usrName == "admin" && pwd == "admin")
+
+	switch (usrName)
 	{
-		res.send({success:true});
-		authentified = true;
-		numberOfAdmin = 1;
+		case "admin":
+			if(pwd == "admin")
+			{
+				res.send({success:true});
+				authentified = true;
+				numberOfAdmin = 1;
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
+			
+		case "jeanJacque":
+			if(pwd == "jeanJacque")
+			{
+				res.send({success:true});
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
+		
+		
+		case "Benoit": 
+			if(pwd == "Benoit")
+			{
+				res.send({success:true});
+				break;
+			}
+			else
+			{
+				res.send({success:false});
+				break;
+			}
 	}
-	else
-	{
-		res.send({success:false});
-		authentified = false;
-	}
-	
-	
 });
 
 
-app.post('/invite', function(req, res){
+app.post('/invite', function(req, res){				// invite requete
 	var response = req.body.demande;
 	
 	if(response)
 	{
 		res.send({ success: true });
-		socketAdmin.emit('newInvite', {demande:true});
+		socketAdmin.emit('newInvite', {demande:true});			// on demande a l'admin si on l'accepte
 		socketU.emit('newInvite', {demande:true});
 		
 		console.log("emit");
 		
-		socketAdmin.on('inviteOk', function (data) {
+		socketAdmin.on('inviteOk', function (data) {		// si admin ok
 			console.log("envoi invite to admin ok");
-			io.emit('inviteOk', {demande:true});
+			io.emit('inviteOk', {demande:true});		//  on le notifie au client
 		});
 		
 		socketU.on('inviteOk', function (data) {
@@ -170,7 +198,7 @@ app.post('/invite', function(req, res){
 });
 
 
-app.post('/decoUser', function(req,res){
+app.post('/decoUser', function(req,res){			// disconnect client = delete socket and user
 	
 	var idUser = req.body.id;
 	
@@ -184,14 +212,14 @@ app.post('/decoUser', function(req,res){
 	delete tabConnexion[idUser];
 });
 
-app.post('/deleteLastUser', function(req,res){
+app.post('/deleteLastUser', function(req,res){		// quand l'admin n'accepte pas le client on le suppr car il à été rentré
 	delete tabUser[tabUser.length-1];
 	delete tabConnexion[tabConnexion.lenght-1];
 	delete tabSocket[tabConnexion.lenght-1];
 });
 
 
-app.get('/users', function(req,res){
+app.get('/users', function(req,res){				// renvoi le tableau des invites suite au get
 	var tabUserBis = [];
 	var tabDateBis = [];
 	
@@ -209,18 +237,17 @@ app.get('/users', function(req,res){
 
 
 
-// Quand un client se connecte, on le note dans la console
-
+// Quand un client se connecte
 io.sockets.on('connection', function (socket) {
 
-//remplace l'ancient admin
-	if(socket.handshake.query['admin'] == "true")
+//remplace l'ancien admin
+	if(socket.handshake.query['admin'] == "true")			// on verifie les donnée dans la requete
 	{
 		if(authentified)
 		{
 			if(numberOfAdmin > 0 && socketAdmin != null)
 			{
-				socketAdmin = socket;
+				socketAdmin = socket;		//save admin socket
 			}
 			else
 			{
@@ -228,7 +255,7 @@ io.sockets.on('connection', function (socket) {
 				socketAdmin.on('disconnect', function () 
 				{
 					console.log("disconnect admin");
-					numberOfAdmin = 0;
+					numberOfAdmin = 0;				// deco admin
 				});
 			}	
 		}
@@ -246,11 +273,11 @@ io.sockets.on('connection', function (socket) {
 	
 	var dateUser = jour + '/' + mois + '/' + annee + ':' + heure + ':' + minute;
 	
-	var name = "User" + numberOfConnexion;
+	var name = "User" + numberOfConnexion;			// name User
 
 	if(socketAdmin != null)
 	{
-		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );
+		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );		// notification d'une connexion à l'admin
 	}
 	
 	if(socket.handshake.query['admin'] != "true" && socket.handshake.query['admin'] != "except")	/* si c'est invite on le rajoute */
@@ -261,7 +288,7 @@ io.sockets.on('connection', function (socket) {
 		console.log("invite coucou !");
 		numberOfConnexion += 1;
 		
-		setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function
+		setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function (tempo user)
 	}
 	
 	io.emit('update pression', { pression: pres.toString() });
@@ -270,7 +297,7 @@ io.sockets.on('connection', function (socket) {
 	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 	
 	
-	/*var mySqlClient = mysql.createConnection({
+	/*var mySqlClient = mysql.createConnection({				// Connexion mysql
 		host     : "localhost",
 		user     : "root",
 		password : "mysql",
@@ -302,7 +329,7 @@ io.sockets.on('connection', function (socket) {
 	
 });
 
-function timeoutConnexion (socket) {
+function timeoutConnexion (socket) {			// tempo user function
   
   if(socket != null)
   {
