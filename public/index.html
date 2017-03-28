@@ -1,15 +1,22 @@
+
+	<script>
+	var socket;
+	var socketAdmin;
+	var isPc = false;
+	var isPortable = false;
+	var controleButtonPressed = false;
+	
+	var newURL = window.location.protocol + "//" + window.location.host;
+
+
+	</script>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<style>
-	 html, body, * {						<!-- desactive appui et menu context android -->
-		-webkit-touch-callout: none;          
-		-webkit-user-select: none;
-	}
-	</style>
 		
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Tenderlift</title>
@@ -23,7 +30,6 @@
     <link href="stylesheets/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap -->
 	<script src="javascripts/bootstrap.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-  
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -44,22 +50,41 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Projet Industriel TenderLift</a>
+					<a href="#" class="navbar-left"><img src="images/logo_text.png" width="160" class="img-responsive"/></a>
+          <a class="navbar-brand" href="#"></a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a id="adminOnglet" href="#">Admin</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li class="active"><a href="#"> 
+								<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+								Home</a></li>
+            <li><a id="adminOnglet" href="#"> 
+								<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+								Admin</a></li>
+            <li><a href="#contact"> 
+								<span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+								Contact</a></li>
           </ul>
 					<div id="divDisconnec" class="navbar-form navbar-right btn-group">
-						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> Invité </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary"> Déconnexion </button>						
-						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> Connexion </button>
+						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> 
+								<span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+								Invité </button>
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary">Déconnection </button>						
+						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> 
+								<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+								Connecxion </button>
           </div>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
+		
+	<div class="container">
+		<div id="alert" class="alert alert-danger" role="alert">
+		<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+		<span class="sr-only">Error:</span>
+		Enter a valid email address
+		</div>
+	</div>
 		
 	<div class="container">
 		<div class="jumbotron">
@@ -68,8 +93,14 @@
 	  <div class="row ">
 			<center>
 			<div class="col-md-4 col-xs-4 ">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> <img src="images/haut.png"  width="40" oncontextmenu="return false;"/></button> </br></br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled"><img src="images/bas.png" width="40" oncontextmenu="return false;"/></button> 
+				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
+					<!-- <img src="images/haut.png"  width="40" oncontextmenu="return false;"/>  -->
+					<div class="flecheHaut"></div>
+					</button> </br></br>
+				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
+					<!-- <img src="images/bas.png" width="40" oncontextmenu="return false;"/> -->
+					<div class="flecheBas"></div>
+				</button> 
 			</div>
 			<div class="col-md-8 col-xs-8">
 				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
@@ -90,9 +121,21 @@
 					<label> Pression en bar : </label>
 					<label id="pression"> 0.0 </label>
 				</div>
-				<div class="col-md-2 col-xs-6" id="controle">
+				<div class="col-md-2 col-xs-6">
+					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
 				</div>
-				
+				<div class="col-md-2 col-xs-6">
+					<p>MAX :1000</p>					
+					<div id="Cont-translate"> 
+						<div id="translate"> valeur </div>
+					</div>
+					<p>MIN :0</p>
+				</div>
+				<div class="col-md-2 col-xs-6" >
+					<img src="images/gauge.png" class="img-responsive" id="gauge"> 
+					<div id="rotate"></div>
+					<p>0°</p>
+				</div>
 			</center>
 	  </div>
 	  </div>
@@ -151,16 +194,22 @@
 							</div>
 						</div>		<!-- /.modal-content -->
 					</div>		<!-- /.modal-dialog -->
-				</div>			<!-- /.modal -->	  
-	
+				</div>			<!-- /.modal -->	   
+	</body>
+
 	<script>
 	var socket;
 	var socketAdmin;
 	var isPc = false;
 	var isPortable = false;
-	var controleButtonPressed = false;
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
+
+	document.getElementById("alert").className = "alert alert-success";
+
+	var h = $('#gauge').height()/2+2;
+	var deg = 0;  /*  -45 to 225*/
+	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
 
 //------------------------------------------------------------------------------------------------------------------------------- Check media
 	var isMobile = window.matchMedia("only screen and (max-width: 760px)");			// check if pc ou telephone
@@ -226,16 +275,6 @@
 				console.log("fail post Haut");
 			}
 		}
-	}
-	
-	function degriserBoutons() 
-	{
-		document.getElementById('flecheHaut').disabled = '';
-		document.getElementById('flecheBas').disabled = '';
-		document.getElementById('disconnectButton').disabled = '';
-		document.getElementById('authButton').disabled = 'disabled';
-		
-		return 0;
 	}
 	
 	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
@@ -379,7 +418,9 @@
 			}
 		});
 	}
+
 	
+		
 //---------------------------------------------------------------------------------------------------------------------------------------  Auth button modal
 	$('#sendButon').on('click', function()			// POST : Auth admin ou utilisateur
 	{											// Send button modal Auth
@@ -429,7 +470,17 @@
 			
 		}
 	});
-//---------------------------------------------------------------------------------------------------------------------- Invites	
+	
+	$('#disconnectButton').on('click', function() <!--- Deconnexion -->
+	{
+		document.getElementById('flecheHaut').disabled = 'disabled';
+		document.getElementById('flecheBas').disabled = 'disabled';
+		document.getElementById('authButton').disabled = '';
+		socket.close();
+	});
+	
+	
+	//---------------------------------------------------------------------------------------------------------------------- Invites	
 	$('#inviteButton').on('click', function()		// INVITE Button
 	{						
 		$.post(newURL+"/invite", {demande:true} ,callbackPostSend); // post json 
@@ -471,6 +522,6 @@
 			}
 		}
 	}); 	
+
 	</script>
-  </body>
 </html>

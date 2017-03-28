@@ -147,7 +147,8 @@
 			
 		$('#declineButton').on('click', function()			// decline : invite = on suppr le last invite avec le post du user avec le dernier id
 		{	
-			$.post(newURL +"/deleteLastUser", {user:"last"} ,callbackPost);
+
+			$.post(newURL +"/deleteLastUser", {user:"last"} ,callbackPost); <!-- post json -->
 							
 				function callbackPost(data, status)
 				{
