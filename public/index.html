@@ -111,7 +111,18 @@
 				<div class="col-md-2 col-xs-6">
 					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
 				</div>
-				
+				<div class="col-md-2 col-xs-6">
+					<p>MAX :1000</p>					
+					<div id="Cont-translate"> 
+						<div id="translate"> valeur </div>
+					</div>
+					<p>MIN :0</p>
+				</div>
+				<div class="col-md-2 col-xs-6" >
+					<img src="images/gauge.png" class="img-responsive" id="gauge"> 
+					<div id="rotate"></div>
+					<p>0°</p>
+				</div>
 			</center>
 	  </div>
 	  </div>
@@ -191,7 +202,10 @@
 	}
 	
 	document.getElementById("alert").className = "alert alert-success";
-	document.getElementById("alert").className = "alert alert-success";
+	document.getElementById("alert").className = "alert alert-success";
+	var h = $('#gauge').height()/2+2;
+	var deg = 0;  /*  -45 to 225*/
+	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
 
 	/*
 	document.getElementById('flecheHaut').oncontextmenu = false;
