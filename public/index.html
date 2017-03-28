@@ -121,8 +121,7 @@
 					<label> Pression en bar : </label>
 					<label id="pression"> 0.0 </label>
 				</div>
-				<div class="col-md-2 col-xs-6">
-					<label><input type="checkbox" value="" id="controle" >Contrôle</label>
+				<div class="col-md-2 col-xs-6" id="controle">
 				</div>
 				<div class="col-md-2 col-xs-6">
 					<p>MAX :1000</p>					
@@ -212,9 +211,8 @@
 	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
 
 //------------------------------------------------------------------------------------------------------------------------------- Check media
-	var isMobile = window.matchMedia("only screen and (max-width: 760px)");			// check if pc ou telephone
     
-	if (isMobile.matches) {					
+	if (window.Touch) {					
         isPc = false;									// si portable on cree un bouton de sécurité 'homme mort'
 		isPortable = true;
 		$('#controle').append("<button type=\"button\" class=\"btn btn-primary\" id=\"controleButton\">Contrôle</button>");	
@@ -259,6 +257,16 @@
 //------------------------------------------------------------------------------------------------------------------------------------ Fonction diverses utiles
 	document.getElementById('flecheHaut').oncontextmenu = false;			// desactive menu contextuel lors d'appui long
 	document.getElementById('flecheBas').oncontextmenu = false;
+	
+	function degriserBoutons() 
+	{
+		document.getElementById('flecheHaut').disabled = '';
+		document.getElementById('flecheBas').disabled = '';
+		document.getElementById('disconnectButton').disabled = '';
+		document.getElementById('authButton').disabled = 'disabled';
+		
+		return 0;
+	}
 	
 	function callbackPost(data, status)						// callbackPost commun après chaque post
 	{
