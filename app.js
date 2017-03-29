@@ -50,7 +50,7 @@ client.on('data', function(data) {
 	var size = dataHex.length;
 	var id = parseInt(dataHex.slice(4,10));
 
-	if(( size == 16) && (id == 2 ))
+	if(( size == 22) && (id == 4 ))
 	{
 		var dlc = parseInt(dataHex.slice(2,4))-3;
 		var msg =  dataHex.slice(10,10+dlc*2);
