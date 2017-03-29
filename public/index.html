@@ -1,16 +1,3 @@
-
-	<script>
-	var socket;
-	var socketAdmin;
-	var isPc = false;
-	var isPortable = false;
-	var controleButtonPressed = false;
-	
-	var newURL = window.location.protocol + "//" + window.location.host;
-
-
-	</script>
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -201,7 +188,8 @@
 	var socketAdmin;
 	var isPc = false;
 	var isPortable = false;
-	
+	var controleButtonPressed = false;
+
 	var newURL = window.location.protocol + "//" + window.location.host;
 
 	document.getElementById("alert").className = "alert alert-success";
@@ -297,11 +285,11 @@
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
 			$("#pression").html(message.pression);
-			deg = message.pression > 1000 ? 225 : (message.pression / 270 -45);
-			document.getElementById("rotate").style.transform = "".concat("translateY(",h,"px) rotate(",deg,"deg)");
+			deg = message.pression > 1000 ? 225 : (message.pression / 1000 * 270 -45);
+			document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)");
 			
-			var hTranslate = message.pression > 1000 ? 350 : message.pression / 370 - 20;
-			document.getElementById("translate").style.transform = "".concat("translateY(-",hTranslate,"%)"); 
+			var hTranslate = message.pression > 1000 ? -20 : 350 - message.pression /1000 * 370;
+			document.getElementById("translate").style.transform = "".concat("translateY(",hTranslate,"%)"); 
 
 		})
 					
