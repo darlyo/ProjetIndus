@@ -297,6 +297,12 @@
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
 			$("#pression").html(message.pression);
+			deg = message.pression > 1000 ? 225 : (message.pression / 270 -45);
+			document.getElementById("rotate").style.transform = "".concat("translateY(",h,"px) rotate(",deg,"deg)");
+			
+			var hTranslate = message.pression > 1000 ? 350 : message.pression / 370 - 20;
+			document.getElementById("translate").style.transform = "".concat("translateY(-",hTranslate,"%)"); 
+
 		})
 					
 		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
