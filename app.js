@@ -42,29 +42,43 @@ var mysql = require('mysql');		// MySQL
 var client = new net.Socket();
 client.connect(PORT, HOST, function() {
 	console.log('Connected');
+	client.setNoDelay();
 });
 
 client.on('data', function(data) {
-	var dataHex = data.toString('hex');
-	console.log('Received: ' + dataHex);
-	var size = dataHex.length;
-	var id = parseInt(dataHex.slice(4,10));
-
-	if(( size == 22) && (id == 4 ))
+	var res = data.toString('hex');
+	var i = res.indexOf("4307");
+	var dataHex = res.substr(i,22);
+	//console.log('Received: ' + dataHex);
+	while( res.length >= 22)
 	{
-		var dlc = parseInt(dataHex.slice(2,4))-3;
-		var msg =  dataHex.slice(10,10+dlc*2);
-		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
-		motor = parseInt(msg.slice(0,2));
-		temp = parseInt(msg.slice(2,4));
-		pres = swapEndianness(parseInt(msg.slice(4,12),16));
-		
-		console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
+		res = res.substr(i+23,res.length-i-23);
+		var size = dataHex.length;
+		var id = parseInt(dataHex.slice(4,10));
 
-		io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-		io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
-		io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
-		io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+		if(( size == 22) && (id == 4 ))
+		{
+			var dlc = parseInt(dataHex.slice(2,4))-3;
+			var msg =  dataHex.slice(10,10+dlc*2);
+			//console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
+			if ( motor != parseInt(msg.slice(0,2)))
+			{
+				motor = parseInt(msg.slice(0,2));
+				io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+				io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+			}
+			if (temp != parseInt(msg.slice(2,4)))
+			{
+				temp = parseInt(msg.slice(2,4));
+				io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+			}
+			if ( pres != swapEndianness(parseInt(msg.slice(4,12),16)))
+			{
+				pres = swapEndianness(parseInt(msg.slice(4,12),16));
+				io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+			}
+			//console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
+		}
 	}
 });
 
