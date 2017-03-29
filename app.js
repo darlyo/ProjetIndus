@@ -115,8 +115,8 @@ app.get('/', function(req, res) {
 app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	//upState = !upState;
 	//downState = false;
-	upState = req.up;
-	downState = req.down;
+	upState = req.body.up;
+	downState = req.body.down;
 	
 	sendCan(upState,downState);
 	res.send({success:true});
@@ -126,8 +126,8 @@ app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 app.post('/descendrePasserelle', function(req, res){			// Descendre
 	//upState = false;
 	//downState = !downState;
-	upState = req.up;
-	downState = req.down;
+	upState = req.body.up;
+	downState = req.body.down;
 	
 	sendCan(upState,downState);
 	res.send({success:true});

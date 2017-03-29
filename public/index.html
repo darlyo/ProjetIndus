@@ -194,6 +194,7 @@
 
 	document.getElementById("alert").className = "alert alert-success";
 
+	var etatTDL = "droit";
 	var h = $('#gauge').height()/2+2;
 	var deg = 0;  /*  -45 to 225*/
 	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
@@ -216,7 +217,7 @@
 				$('#flecheHaut').attr('class','btn btn-primary');								<!-- Changer couleur bouton on peut aussi avec le css ou attr de la balise -->
 				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 			<!-- post json puis callbackPost -->
 				$('#flecheBas').attr('class','btn btn-primary');		
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 
+				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 
 			})
 			
 		controlMouvement.addEventListener('touchleave', function(e){
@@ -224,7 +225,7 @@
 				$('#flecheHaut').attr('class','btn btn-primary');		
 				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);
 				$('#flecheBas').attr('class','btn btn-primary');		
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
+				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
 			})
 			
 		controlMouvement.addEventListener('touchcancel', function(e){
@@ -232,7 +233,7 @@
 				$('#flecheHaut').attr('class','btn btn-primary');		
 				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 
 				$('#flecheBas').attr('class','btn btn-primary');
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
+				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
 			})
 	}
 	else
@@ -320,19 +321,24 @@
 		})
 		
 		socket.on('tenderlift', function(message) {				<!-- Update position tenderlift via socket -->
-			//alert('temperature : ' + message.temperature);		  
-			if(message.position == "montee")
+			//alert('temperature : ' + message.temperature);
+			if (message.position != etatTDL )
 			{
-				$('#tdl').attr('src','images/monte.gif');
+				etatTDL = message.position;
+				if(message.position == "montee")
+				{
+					$('#tdl').attr('src','images/monte.gif');
+				}
+				else if(message.position == "descente")
+				{
+					$('#tdl').attr('src','images/descente.gif');
+				}
+				else if(message.position == "droit")
+				{
+					$('#tdl').attr('src','images/TDL-5.png');
+				}
 			}
-			else if(message.position == "descente")
-			{
-				$('#tdl').attr('src','images/descente.gif');
-			}
-			else if(message.position == "droit")
-			{
-				$('#tdl').attr('src','images/TDL-5.png');
-			}
+			
 		})
 		
 		return 0;
