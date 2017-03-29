@@ -61,22 +61,17 @@ client.on('data', function(data) {
 			var dlc = parseInt(dataHex.slice(2,4))-3;
 			var msg =  dataHex.slice(10,10+dlc*2);
 			//console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
-			if ( motor != parseInt(msg.slice(0,2)))
-			{
+
 				motor = parseInt(msg.slice(0,2));
 				io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
 				io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
-			}
-			if (temp != parseInt(msg.slice(2,4)))
-			{
+
 				temp = parseInt(msg.slice(2,4));
 				io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
-			}
-			if ( pres != swapEndianness(parseInt(msg.slice(4,12),16)))
-			{
+
 				pres = swapEndianness(parseInt(msg.slice(4,12),16));
 				io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-			}
+
 			//console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
 		}
 	}
@@ -118,8 +113,10 @@ app.get('/', function(req, res) {
 });
 
 app.post('/monterPasserelle', function(req, res){					// Monter passerelle
-	upState = !upState;
-	downState = false;
+	//upState = !upState;
+	//downState = false;
+	upState = req.up;
+	downState = req.down;
 	
 	sendCan(upState,downState);
 	res.send({success:true});
@@ -127,8 +124,10 @@ app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 });
 
 app.post('/descendrePasserelle', function(req, res){			// Descendre
-	upState = false;
-	downState = !downState;
+	//upState = false;
+	//downState = !downState;
+	upState = req.up;
+	downState = req.down;
 	
 	sendCan(upState,downState);
 	res.send({success:true});
