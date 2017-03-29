@@ -68,8 +68,8 @@
 	<div class="container">
 		<div id="alert" class="alert alert-danger" role="alert">
 		<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-		<span class="sr-only">Error:</span>
-		Enter a valid email address
+		<span class="sr-only">Error:</span> 
+		<span id="alert-text">Veuillez vous connecter </span>
 		</div>
 	</div>
 		
@@ -192,8 +192,6 @@
 
 	var newURL = window.location.protocol + "//" + window.location.host;
 
-	document.getElementById("alert").className = "alert alert-success";
-
 	var etatTDL = "droit";
 	var h = $('#gauge').height()/2+2;
 	var deg = 0;  /*  -45 to 225*/
@@ -253,6 +251,7 @@
 		document.getElementById('flecheBas').disabled = '';
 		document.getElementById('disconnectButton').disabled = '';
 		document.getElementById('authButton').disabled = 'disabled';
+		document.getElementById('inviteButton').disabled = 'disabled';
 		
 		return 0;
 	}
@@ -455,6 +454,8 @@
 						
 						connexionDataSocket(socket);			// Connexion pour recevoir les données 
 						
+						document.getElementById("alert").className = "alert alert-success";
+						document.getElementById("alert-text").innerHTML  = " Bienvenu Admin";
 						$("#modalAuth").modal('hide');		// ferme modal 
 					}
 					else				
@@ -466,11 +467,15 @@
 						
 						connexionDataSocket(socket);			// Connexion pour recevoir les données 
 						
+						document.getElementById("alert").className = "alert alert-success";
+						document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 180 secondes";
 						$("#modalAuth").modal('hide');		// ferme modal
 					}
 				}
 				else
 				{
+				
+					document.getElementById("alert-text").innerHTML  = " Echec connexion";
 					console.log("fail sendButton");
 					$("#messageInfo").html("Erreur Authentification");
 				}
@@ -483,8 +488,11 @@
 	{
 		document.getElementById('flecheHaut').disabled = 'disabled';
 		document.getElementById('flecheBas').disabled = 'disabled';
+		document.getElementById('disconnectButton').disabled = 'disabled';
 		document.getElementById('authButton').disabled = '';
+		document.getElementById('inviteButton').disabled = '';
 		socket.close();
+		document.getElementById("alert-text").innerHTML  = " Session fermée";
 	});
 	
 	
@@ -520,6 +528,7 @@
 						document.getElementById('disconnectButton').disabled = 'disabled';
 						document.getElementById('authButton').disabled = '';
 						document.getElementById('inviteButton').disabled = '';
+						document.getElementById("alert-text").innerHTML  = " Session expirée";
 						socket.close();
 					})
 				}
