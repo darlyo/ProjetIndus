@@ -234,6 +234,9 @@
 		$("#contentAdmin").show();
 		$("#contentHome").hide();
 	});
+	
+	refreshTabInvit();						//  refresh au cas ou si on actualise la page on affiche
+	
 //------------------------------------------------------------------------------------------------------------------------------- Check media
     
 	if (window.Touch) {					
@@ -494,7 +497,7 @@
 						document.getElementById("alert-text").innerHTML  = " Bienvenu Admin";
 						$("#modalAuth").modal('hide');		// ferme modal
 						
-            //acceptation Inviter en Admin uniquement
+						//acceptation Inviter en Admin uniquement
 						socket.on('newInvite', function(message) 						// quand un nouvel invite on demande accptation
 						{		
 							$("#modalAccept").modal('show');						// popup accept ou non invite
@@ -615,35 +618,50 @@
 		
 		function refreshTabInvit()
 		{
-			tailleDivAdmin += 25;
 			var userId;
+			var tabId = [];
 			
 			$.get(newURL +"/users",callbackGet);					// demande des users
 			function callbackGet(data, status) 
 			{				
 				console.log(status);
-				console.log(data.users);
+				console.log(data.users[0]);
 				if(status == "success")						// si requete ok on met a jour l'affichage
-				{				
-					userId = parseInt(data.users.split("User")[1]);	// recup id user dans la chaine User23 par exmple
-					
-					var newRows = "";									// prepare new row dans le tableau			
-					
-					if(data.users.length > 0)
+				{	
+					for(var i =0; i< data.users.length;i++)
 					{
-						newRows += "<tr id=\"ligne" + (userId)  + "\"" +  "><td>" + data.users + "</td><td>" + 
-								data.dateConnexion + "</td><td> <button type=\"button\" class=\"decoButton\" id=\"" + (userId) + "\">Déconnecter</button></td></tr>";
-						
-						$("#contentAdmin").height(tailleDivAdmin);
-						if(!document.getElementById('ligne'+userId))
-						{
-							$("#myTable").append(newRows);
-							$('.decoButton').click(function() 
-								{
-									$("#ligne" + this.id).remove();
-								});
-						}		
+						tabId.push(parseInt(data.users[i].split("User")[1]));	// recup id user dans la chaine User23 par exmple
 					}
+													// prepare new row dans le tableau			
+					
+					//if(data.users.length > 0)
+					//{
+						for(var i=0; i< data.users.length;i++)		// remove previous user array
+						{
+							$("#ligne" + tabId[i]).remove();
+						}
+						
+						for(var i =0; i< data.users.length;i++)
+						{
+							if(data.users[i] != null)
+							{
+								var newRows = "";	
+								newRows += "<tr id=\"ligne" + (tabId[i])  + "\"" +  "><td>" + data.users[i] + "</td><td>" + 
+										data.dateConnexion[i] + "</td><td> <button type=\"button\" class=\"decoButton\" id=\"" + (tabId[i]) + "\">Déconnecter</button></td></tr>";
+								
+								
+								//if(!document.getElementById('ligne'+tabId[i]))
+								//{
+									$("#myTable").append(newRows);						// ajout de la ligne
+									$('.decoButton').click(function() 					// ajout listener decoButton
+										{
+											$("#ligne" + this.id).remove();
+										});
+								//}
+							}
+						}
+						$("#contentAdmin").height(tailleDivAdmin+(25*data.users.length));						
+					//}
 				}				
 			}
 		}

@@ -224,10 +224,8 @@ app.post('/deleteLastUser', function(req,res){		// quand l'admin n'accepte pas l
 
 
 app.get('/users', function(req,res){				// renvoi le tableau des invites suite au get
-	
-	console.log(tabUser[tabUser.length-1]);
-	
-	res.send({users:tabUser[tabUser.length-1], dateConnexion:tabConnexion[tabConnexion.length-1]});
+
+	res.send({users:tabUser, dateConnexion:tabConnexion});
 });
 
 
