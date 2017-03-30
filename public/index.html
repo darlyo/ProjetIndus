@@ -42,10 +42,10 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#"> 
+            <li id="home" ><a > 
 								<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
 								Home</a></li>
-            <li><a id="adminOnglet" href="#"> 
+            <li id="admin" ><a href="#"> 
 								<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
 								Admin</a></li>
             <li><a href="#contact"> 
@@ -73,59 +73,64 @@
 		</div>
 	</div>
 		
-	<div class="container">
-		<div class="jumbotron">
-	  
-	  <h2> Controles 1 </h2>
-	  <div class="row ">
-			<center>
-			<div class="col-md-4 col-xs-4 ">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
-					<!-- <img src="images/haut.png"  width="40" oncontextmenu="return false;"/>  -->
-					<div class="flecheHaut"></div>
-					</button> </br></br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
-					<!-- <img src="images/bas.png" width="40" oncontextmenu="return false;"/> -->
-					<div class="flecheBas"></div>
-				</button> 
-			</div>
-			<div class="col-md-8 col-xs-8">
-				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
-			</div>
-			</center>
-	  </div>
-	  
-	  <h2> Controles 2 </h2>
-	  <div class="row">
-			<center>
-				<div class="col-md-2 col-xs-6"> Moteur
-					<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
-				</div> 
-				<div class="col-md-2 col-xs-6">Temperature
-					<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+	<div class="container" >
+	
+		<div id="contentAdmin" class="jumbotron">	
+			<h2> Administration </h2>
+			<table id="myTable" class="col-md-6 col-xs-6">							<!--------- TAB USER ---------->
+			</table>
+		</div>
+		
+		<div id="contentHome" class="jumbotron">
+		  <h2> Controles 1 </h2>
+		  <div class="row ">
+				<center>
+				<div class="col-md-4 col-xs-4 ">
+					<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
+						<!-- <img src="images/haut.png"  width="40" oncontextmenu="return false;"/>  -->
+						<div class="flecheHaut"></div>
+						</button> </br></br>
+					<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
+						<!-- <img src="images/bas.png" width="40" oncontextmenu="return false;"/> -->
+						<div class="flecheBas"></div>
+					</button> 
 				</div>
-				<div class="col-md-2 col-xs-6">
-					<label> Pression en bar : </label>
-					<label id="pression"> 0.0 </label>
+				<div class="col-md-8 col-xs-8">
+					<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
 				</div>
-				<div class="col-md-2 col-xs-6" id="controle">
-				</div>
-				<div class="col-md-2 col-xs-6">
-					<p>MAX :1000</p>					
-					<div id="Cont-translate"> 
-						<div id="translate"> valeur </div>
+				</center>
+		  </div>
+		  
+		  <h2> Controles 2 </h2>
+		  <div class="row">
+				<center>
+					<div class="col-md-2 col-xs-6"> Moteur
+						<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
+					</div> 
+					<div class="col-md-2 col-xs-6">Temperature
+						<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
 					</div>
-					<p>MIN :0</p>
-				</div>
-				<div class="col-md-2 col-xs-6" >
-					<img src="images/gauge.png" class="img-responsive" id="gauge"> 
-					<div id="rotate"></div>
-					<p>0°</p>
-				</div>
-			</center>
-	  </div>
-	  </div>
-
+					<div class="col-md-2 col-xs-6">
+						<label> Pression en bar : </label>
+						<label id="pression"> 0.0 </label>
+					</div>
+					<div class="col-md-2 col-xs-6" id="controle">
+					</div>
+					<div class="col-md-2 col-xs-6">
+						<p>MAX :1000</p>					
+						<div id="Cont-translate"> 
+							<div id="translate"> valeur </div>
+						</div>
+						<p>MIN :0</p>
+					</div>
+					<div class="col-md-2 col-xs-6" >
+						<img src="images/gauge.png" class="img-responsive" id="gauge"> 
+						<div id="rotate"></div>
+						<p>0°</p>
+					</div>
+				</center>
+		  </div>
+		</div>
 	</div>
 	
 	<div class="container" id="contact" >
@@ -180,7 +185,25 @@
 							</div>
 						</div>		<!-- /.modal-content -->
 					</div>		<!-- /.modal-dialog -->
-				</div>			<!-- /.modal -->	   
+				</div>			<!-- /.modal -->
+	<!---------------------------------------------------------------- MODAL ACCEPT INVITE ---------------------------------->
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalAccept">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title">Accepter Invité </h4>
+							</div>
+							<div class="modal-body">			<!-- modal Body -->
+								<label for="usr">Accepter l'invité ? </label>
+							</div>		<!-- modal Body -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal" id="declineButton">Non</button>
+								<button type="button" class="btn btn-primary" id="acceptButton">Oui</button>
+							</div>
+						</div>		<!-- /.modal-content -->
+					</div>		<!-- /.modal-dialog -->
+				</div>
 	</body>
 
 	<script>
@@ -188,15 +211,29 @@
 	var socketAdmin;
 	var isPc = false;
 	var isPortable = false;
-	var controleButtonPressed = false;
-
+	var tailleDivAdmin = 55;			// modif taille div userArray on new invite
+	
 	var newURL = window.location.protocol + "//" + window.location.host;
+	var controleButtonPressed = false;
 
 	var etatTDL = "droit";
 	var h = $('#gauge').height()/2+2;
 	var deg = 0;  /*  -45 to 225*/
 	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
-
+	
+	$("#contentAdmin").hide();
+	
+	$('#home').on('click', function() 		
+	{
+		$("#contentAdmin").hide();
+		$("#contentHome").show();
+	});
+	
+	$('#admin').on('click', function() 	
+	{
+		$("#contentAdmin").show();
+		$("#contentHome").hide();
+	});
 //------------------------------------------------------------------------------------------------------------------------------- Check media
     
 	if (window.Touch) {					
@@ -450,13 +487,48 @@
 						console.log("success sendButton");
 						
 						degriserBoutons();	
-						window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		// pop-up admin 
 						
 						connexionDataSocket(socket);			// Connexion pour recevoir les données 
 						
 						document.getElementById("alert").className = "alert alert-success";
 						document.getElementById("alert-text").innerHTML  = " Bienvenu Admin";
-						$("#modalAuth").modal('hide');		// ferme modal 
+						$("#modalAuth").modal('hide');		// ferme modal
+						
+            //acceptation Inviter en Admin uniquement
+						socket.on('newInvite', function(message) 						// quand un nouvel invite on demande accptation
+						{		
+							$("#modalAccept").modal('show');						// popup accept ou non invite
+								
+							$('#acceptButton').on('click', function()			
+							{	
+								refreshTabInvit();
+								socket.emit('inviteOk', {data:"invite"});				// on envoie la confirmation accpte user
+								$("#modalAccept").modal('hide');				
+							});
+							
+							$("#declineButton").on('click', function()			// decline : invite = on suppr le last invite avec le post du user avec le dernier id
+							{				
+									$.post(newURL +"/deleteLastUser",callbackPost);			// Si admin deco user on post une suppression
+												
+									function callbackPost(data, status)
+									{
+										console.log(status);
+										console.log(data.success);
+														
+										if(status == "success")
+										{
+											if(data.success)
+											{
+												console.log("success decoButton");
+											}
+											else
+											{
+												console.log("fail decoButton");
+											}
+										}
+									}
+							});
+						});
 					}
 					else				
 					{
@@ -511,7 +583,7 @@
 					socket = io.connect(newURL, { query: "admin=false" });			// Connexion Socket 
 					console.log("ok socket user invite");
 					
-					socket.on('inviteOk', function(message){					// Si l'admin est ok pour l'invite
+					socket.on('inviteOkUser', function(message){					// Si l'admin est ok pour l'invite
 					
 						console.log("success inviteButton");
 						
@@ -538,7 +610,44 @@
 				}
 			}
 		}
-	}); 	
+	});
+//-------------------------------------- TAB USER REFRESH
+		
+		function refreshTabInvit()
+		{
+			tailleDivAdmin += 25;
+			var userId;
+			
+			$.get(newURL +"/users",callbackGet);					// demande des users
+			function callbackGet(data, status) 
+			{				
+				console.log(status);
+				console.log(data.users);
+				if(status == "success")						// si requete ok on met a jour l'affichage
+				{				
+					userId = parseInt(data.users.split("User")[1]);	// recup id user dans la chaine User23 par exmple
+					
+					var newRows = "";									// prepare new row dans le tableau			
+					
+					if(data.users.length > 0)
+					{
+						newRows += "<tr id=\"ligne" + (userId)  + "\"" +  "><td>" + data.users + "</td><td>" + 
+								data.dateConnexion + "</td><td> <button type=\"button\" class=\"decoButton\" id=\"" + (userId) + "\">Déconnecter</button></td></tr>";
+						
+						$("#contentAdmin").height(tailleDivAdmin);
+						if(!document.getElementById('ligne'+userId))
+						{
+							$("#myTable").append(newRows);
+							$('.decoButton').click(function() 
+								{
+									$("#ligne" + this.id).remove();
+								});
+						}		
+					}
+				}				
+			}
+		}
+//-----------------------------------------------------------------------------------------------------------------
 
 	</script>
 </html>

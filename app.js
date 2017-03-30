@@ -190,20 +190,10 @@ app.post('/invite', function(req, res){				// invite requete
 	if(response)
 	{
 		res.send({ success: true });
+		
 		socketAdmin.emit('newInvite', {demande:true});			// on demande a l'admin si on l'accepte
-		socketU.emit('newInvite', {demande:true});
 		
 		console.log("emit");
-		
-		socketAdmin.on('inviteOk', function (data) {		// si admin ok
-			console.log("envoi invite to admin ok");
-			io.emit('inviteOk', {demande:true});		//  on le notifie au client
-		});
-		
-		socketU.on('inviteOk', function (data) {
-			console.log("envoi invite ok");
-			io.emit('inviteOk', {demande:true});
-		});
 	}
 	else {
 		//res.send({success:false});
@@ -234,19 +224,10 @@ app.post('/deleteLastUser', function(req,res){		// quand l'admin n'accepte pas l
 
 
 app.get('/users', function(req,res){				// renvoi le tableau des invites suite au get
-	var tabUserBis = [];
-	var tabDateBis = [];
 	
-	for(var i = 0; i <tabUser.length; i++)
-	{
-		if(tabUser[i] != null)
-		{
-			tabUserBis.push(tabUser[i]);
-			tabDateBis.push(tabConnexion[i]);
-		}
-	}
+	console.log(tabUser[tabUser.length-1]);
 	
-	res.send({users:tabUserBis, dateConnexion:tabDateBis});
+	res.send({users:tabUser[tabUser.length-1], dateConnexion:tabConnexion[tabConnexion.length-1]});
 });
 
 
@@ -291,9 +272,12 @@ io.sockets.on('connection', function (socket) {
 
 	if(socketAdmin != null)
 	{
-		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );		// notification d'une connexion à l'admin
+		socketAdmin.on('inviteOk', function (data) {		// si admin ok
+			console.log("envoi invite to admin ok");
+			io.emit('inviteOkUser', {demande:true});		//  on le notifie au client
+		});
 	}
-	
+
 	if(socket.handshake.query['admin'] != "true" && socket.handshake.query['admin'] != "except")	/* si c'est invite on le rajoute */
 	{
 		tabUser.push(name);
