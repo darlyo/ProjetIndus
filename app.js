@@ -6,7 +6,7 @@ var net = require('net');
 
 // Variables reseau Can
 
-var HOST = '192.168.173.246';
+var HOST = '192.168.43.199';
 var PORT = 30000;
 
 // Variables de connection
