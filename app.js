@@ -117,7 +117,8 @@ app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	//downState = false;
 	upState = req.body.up == "true" ? true : false ;
 	downState = req.body.down == "true" ? true : false ;
-	
+	console.log('monter Passerelle : up='+upState+ '  ,down='+downState);
+
 	sendCan(upState,downState);
 	res.send({success:true});
 	io.emit()
@@ -129,6 +130,7 @@ app.post('/descendrePasserelle', function(req, res){			// Descendre
 	
 	upState = req.body.up == "true" ? true : false ;
 	downState = req.body.down == "true" ? true : false ;
+	console.log('descendre Passerelle : up='+upState+ '  ,down='+downState);
 
 	sendCan(upState,downState);
 	res.send({success:true});
