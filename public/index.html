@@ -217,6 +217,8 @@
 	var controleButtonPressed = false;
 
 	var etatTDL = "droit";
+	
+	//positionement aiguille gauge
 	var h = $('#gauge').height()/2+2;
 	var deg = 0;  /*  -45 to 225*/
 	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
@@ -238,11 +240,12 @@
 	refreshTabInvit();						//  refresh au cas ou si on actualise la page on affiche
 	
 //------------------------------------------------------------------------------------------------------------------------------- Check media
-    
+//-----------------------Bouton Contole Mobile ou ordi---------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------- 
 	if (window.Touch) {					
         isPc = false;									// si portable on cree un bouton de sécurité 'homme mort'
 		isPortable = true;
-		$('#controle').append("<button type=\"button\" class=\"btn btn-primary\" id=\"controleButton\">Contrôle</button>");	
+		$('#controle').append("<button type=\"button\" class=\"btn btn-primary\" id=\"controleButton\" disabled=\"\">Contrôle</button>");	
 		
 		controlMouvement = document.getElementById('controleButton');
 		
@@ -280,8 +283,10 @@
 		isPortable = false;
 		$('#controle').append("<label><input type=\"checkbox\" value=\"\" id=\"controleCheck\" >Contrôle</label>");
 	}
-	
-//------------------------------------------------------------------------------------------------------------------------------------ Fonction diverses utiles
+
+//------------------------------------------------------------------------------------------------------------------------------------ 
+//------------------------------------ Fonction diverses -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
 	document.getElementById('flecheHaut').oncontextmenu = false;			// desactive menu contextuel lors d'appui long
 	document.getElementById('flecheBas').oncontextmenu = false;
 	
@@ -292,8 +297,15 @@
 		document.getElementById('disconnectButton').disabled = '';
 		document.getElementById('authButton').disabled = 'disabled';
 		document.getElementById('inviteButton').disabled = 'disabled';
-		
-		return 0;
+	}
+	
+	function griserBoutons()
+	{
+		document.getElementById('flecheHaut').disabled = 'disabled';
+		document.getElementById('flecheBas').disabled = 'disabled';
+		document.getElementById('disconnectButton').disabled = 'disabled';
+		document.getElementById('authButton').disabled = '';
+		document.getElementById('inviteButton').disabled = '';
 	}
 	
 	function callbackPost(data, status)						// callbackPost commun après chaque post
@@ -312,6 +324,10 @@
 			}
 		}
 	}
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------Mise à jour des données---------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
 	
 	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
 	{
@@ -383,14 +399,16 @@
 		return 0;
 	}
 
-//------------------------------------------------------------------------------------------------------------------------------------------ Fleche Haut
+//------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------- Commande Fleche Haut ------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------ 
 	flecheH = document.getElementById('flecheHaut');
 	
 	if (window.Touch)   													 // SI on est sur mobile 
 	{ 
 		flecheH.addEventListener('touchstart', function(e)					<!-- on verifie la securite avec button homme mort puis MONTER PASSERELLE -->
 		{
-			if(controleButtonPressed)								// SI homme mort on monte la passerelle
+			if(controleButtonPressed && ($('#flecheHaut').disabled == ''))								// SI homme mort on monte la passerelle
 			{
 				$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton (gitan) on peut aussi avec css ou attr -->
 				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
@@ -424,14 +442,17 @@
 			}
 		});
 	}
-//--------------------------------------------------------------------------------------------------------------------------------------- Fleche bas
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------- Commande Fleche Bas -------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------ 
 	flecheB = document.getElementById('flecheBas');
 	
 	if (window.Touch) 											// on est sur mobile
 	{ 
 		flecheB.addEventListener('touchstart', function(e)					// Descendre PASSERELLE 
 		{
-			if(controleButtonPressed)									// Si securite on descend
+			if(controleButtonPressed && ($('#flecheBas').disabled == ''))	// Si securite on descend
 			{
 				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
 				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);
@@ -467,8 +488,11 @@
 	}
 
 	
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------- Authentification User -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------ 
 		
-//---------------------------------------------------------------------------------------------------------------------------------------  Auth button modal
 	$('#sendButon').on('click', function()			// POST : Auth admin ou utilisateur
 	{											// Send button modal Auth
 		var userName = $('#usr').val();
@@ -543,7 +567,7 @@
 						connexionDataSocket(socket);			// Connexion pour recevoir les données 
 						
 						document.getElementById("alert").className = "alert alert-success";
-						document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 180 secondes";
+						document.getElementById("alert-text").innerHTML  = " Bienvenu";
 						$("#modalAuth").modal('hide');		// ferme modal
 					}
 				}
@@ -561,17 +585,17 @@
 	
 	$('#disconnectButton').on('click', function() <!--- Deconnexion -->
 	{
-		document.getElementById('flecheHaut').disabled = 'disabled';
-		document.getElementById('flecheBas').disabled = 'disabled';
-		document.getElementById('disconnectButton').disabled = 'disabled';
-		document.getElementById('authButton').disabled = '';
-		document.getElementById('inviteButton').disabled = '';
+		griserBoutons();
+
 		socket.close();
 		document.getElementById("alert-text").innerHTML  = " Session fermée";
 	});
 	
 	
-	//---------------------------------------------------------------------------------------------------------------------- Invites	
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------- Authentification Invité -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------ 
 	$('#inviteButton').on('click', function()		// INVITE Button
 	{						
 		$.post(newURL+"/invite", {demande:true} ,callbackPostSend); // post json 
@@ -591,18 +615,14 @@
 						console.log("success inviteButton");
 						
 						degriserBoutons();
-					
+						document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 180 secondes";
 						connexionDataSocket(socket);		// Connexion pour recevoir les données 
 					})
 					
 					socket.on('timeoutConnexion', function(message)								// if timeout Connexion
 					{		
 						alert("Deconnexion");
-						document.getElementById('flecheHaut').disabled = 'disabled';
-						document.getElementById('flecheBas').disabled = 'disabled';
-						document.getElementById('disconnectButton').disabled = 'disabled';
-						document.getElementById('authButton').disabled = '';
-						document.getElementById('inviteButton').disabled = '';
+						griserBoutons();
 						document.getElementById("alert-text").innerHTML  = " Session expirée";
 						socket.close();
 					})
@@ -614,8 +634,10 @@
 			}
 		}
 	});
-//-------------------------------------- TAB USER REFRESH
-		
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------- Tableau utilisateurs -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------ 		
 		function refreshTabInvit()
 		{
 			var userId;
