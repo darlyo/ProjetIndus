@@ -124,9 +124,10 @@
 						<p>MIN :0</p>
 					</div>
 					<div class="col-md-2 col-xs-6" >
-						<img src="images/gauge.png" class="img-responsive" id="gauge"> 
+						<!-- <img src="images/gauge.png" class="img-responsive" id="gauge"> 
 						<div id="rotate"></div>
-						<p>0°</p>
+						<p>0°</p> -->
+						<div id="g1" class="gauge"></div>
 					</div>
 				</center>
 		  </div>
@@ -205,7 +206,9 @@
 					</div>		<!-- /.modal-dialog -->
 				</div>
 	</body>
-
+	
+	<script src="javascripts/raphael-2.1.4.min.js"></script>
+    <script src="javascripts/justgage.js"></script>
 	<script>
 	var socket;
 	var socketAdmin;
@@ -220,8 +223,8 @@
 	
 	//positionement aiguille gauge
 	var h = $('#gauge').height()/2+2;
-	var deg = 0;  /*  -45 to 225*/
-	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
+	//var deg = 0;  /*  -45 to 225*/
+	//document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
 	
 	$("#contentAdmin").hide();
 	
@@ -239,6 +242,28 @@
 	
 	refreshTabInvit();						//  refresh au cas ou si on actualise la page on affiche
 	
+//-------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------- Gauge ---------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------- 	
+	document.addEventListener("DOMContentLoaded", function(event) {
+
+        var g1 = new JustGage({
+            id: "g1",
+            value: 500,
+            min: 0,
+            max: 1000,
+			title: "Pression",
+            label: "bar",
+            relativeGaugeSize: true,
+            donut: false,
+			titleMinFontSize : 30,
+			labelMinFontSize : 16,
+			minLabelMinFontSize : 16,
+			maxLabelMinFontSize : 16,
+			labelFontColor : "#000000",
+			titleFontColor : "#000000"
+        });
+	});
 //------------------------------------------------------------------------------------------------------------------------------- Check media
 //-----------------------Bouton Contole Mobile ou ordi---------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------- 
@@ -341,8 +366,9 @@
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
 			$("#pression").html(message.pression);
-			deg = message.pression > 1000 ? 225 : (message.pression / 1000 * 270 -45);
-			document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)");
+			gg1.refresh(message.pression);
+			//deg = message.pression > 1000 ? 225 : (message.pression / 1000 * 270 -45);
+			//document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)");
 			
 			var hTranslate = message.pression > 1000 ? -20 : 350 - message.pression /1000 * 370;
 			document.getElementById("translate").style.transform = "".concat("translateY(",hTranslate,"%)"); 

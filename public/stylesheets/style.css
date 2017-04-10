@@ -72,3 +72,12 @@ img {
 #Cont-translate {
 	height: 100px;
 }
+
+.gauge {
+	display: block;
+	float: left;
+}
+
+#g1 {
+	width: 100%;
+}
