@@ -124,9 +124,6 @@
 						<p>MIN :0</p>
 					</div>
 					<div class="col-md-2 col-xs-6" >
-						<!-- <img src="images/gauge.png" class="img-responsive" id="gauge"> 
-						<div id="rotate"></div>
-						<p>0°</p> -->
 						<div id="g1" class="gauge"></div>
 					</div>
 				</center>
@@ -220,12 +217,7 @@
 	var controleButtonPressed = false;
 
 	var etatTDL = "droit";
-	
-	//positionement aiguille gauge
-	var h = $('#gauge').height()/2+2;
-	//var deg = 0;  /*  -45 to 225*/
-	//document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
-	
+		
 	$("#contentAdmin").hide();
 	
 	$('#home').on('click', function() 		
@@ -367,8 +359,6 @@
 			console.log(message.pression);
 			$("#pression").html(message.pression);
 			gg1.refresh(message.pression);
-			//deg = message.pression > 1000 ? 225 : (message.pression / 1000 * 270 -45);
-			//document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)");
 			
 			var hTranslate = message.pression > 1000 ? -20 : 350 - message.pression /1000 * 370;
 			document.getElementById("translate").style.transform = "".concat("translateY(",hTranslate,"%)"); 
