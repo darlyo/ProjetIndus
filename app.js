@@ -50,13 +50,14 @@ client.on('data', function(data) {
 	var i = res.indexOf("4307");
 	var dataHex = res.substr(i,22);
 	//console.log('Received: ' + dataHex);
-	while( res.length >= 22)
+	var lenght = 29;
+	while( res.length >= lenght)
 	{
-		res = res.substr(i+23,res.length-i-23);
+		res = res.substr(i+lenght+1,res.length-i-lenght+1);
 		var size = dataHex.length;
 		var id = parseInt(dataHex.slice(4,10));
 
-		if(( size == 22) && (id == 4 ))
+		if(( size == lenght) && (id == 4 ))
 		{
 			var dlc = parseInt(dataHex.slice(2,4))-3;
 			var msg =  dataHex.slice(10,10+dlc*2);
@@ -66,13 +67,17 @@ client.on('data', function(data) {
 				io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
 				io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 
-				temp = parseInt(msg.slice(2,4));
-				io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+				// temp = parseInt(msg.slice(2,4));
+				// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
 
-				pres = swapEndianness(parseInt(msg.slice(4,12),16));
+				pres = swapEndianness(parseInt(msg.slice(2,10),16));
 				io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+				
+				amp = = swapEndianness(parseInt(msg.slice(10,18),16));
+				io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
 
-			//console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
+
+			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' amp);
 		}
 	}
 });
@@ -290,8 +295,9 @@ io.sockets.on('connection', function (socket) {
 	}
 	
 	io.emit('update pression', { pression: pres.toString() });
+	io.emit('update amp', { amperage: amp.toString() });
 	io.emit('moteur', {moteur: motor==1?'on':'off' });
-	io.emit('temperature', { temperature: temp==1?'ok':'nok'});
+	//io.emit('temperature', { temperature: temp==1?'ok':'nok'});
 	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 	
 	
