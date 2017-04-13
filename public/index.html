@@ -107,24 +107,16 @@
 					<div class="col-md-2 col-xs-6"> Moteur
 						<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
 					</div> 
-					<div class="col-md-2 col-xs-6">Temperature
-						<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
-					</div>
-					<div class="col-md-2 col-xs-6">
-						<label> Pression en bar : </label>
-						<label id="pression"> 0.0 </label>
-					</div>
+					<!-- <div class="col-md-2 col-xs-6">Temperature -->
+						<!-- <img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" >  -->
+					<!-- </div> -->
 					<div class="col-md-2 col-xs-6" id="controle">
-					</div>
-					<div class="col-md-2 col-xs-6">
-						<p>MAX :1000</p>					
-						<div id="Cont-translate"> 
-							<div id="translate"> valeur </div>
-						</div>
-						<p>MIN :0</p>
 					</div>
 					<div class="col-md-2 col-xs-6" >
 						<div id="g1" class="gauge"></div>
+					</div>
+					<div class="col-md-2 col-xs-6" >
+						<div id="g2" class="gauge"></div>
 					</div>
 				</center>
 		  </div>
@@ -255,6 +247,23 @@
 			labelFontColor : "#000000",
 			titleFontColor : "#000000"
         });
+		
+		var g2 = new JustGage({
+            id: "g2",
+            value: 0,
+            min: 0,
+            max: 200,
+			title: "Intensité",
+            label: "A",
+            relativeGaugeSize: true,
+            donut: false,
+			titleMinFontSize : 30,
+			labelMinFontSize : 16,
+			minLabelMinFontSize : 16,
+			maxLabelMinFontSize : 16,
+			labelFontColor : "#000000",
+			titleFontColor : "#000000"
+        });
 	});
 //------------------------------------------------------------------------------------------------------------------------------- Check media
 //-----------------------Bouton Contole Mobile ou ordi---------------------------------------------------------------------------
@@ -357,12 +366,7 @@
 		socket.on('update pression', function(message) {				<!-- Update pression via socket -->
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
-			$("#pression").html(message.pression);
 			gg1.refresh(message.pression);
-			
-			var hTranslate = message.pression > 1000 ? -20 : 350 - message.pression /1000 * 370;
-			document.getElementById("translate").style.transform = "".concat("translateY(",hTranslate,"%)"); 
-
 		})
 					
 		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
@@ -378,18 +382,18 @@
 			}
 		})
 					
-		socket.on('temperature', function(message) {				<!-- Update temperature -->
-			//alert('temperature : ' + message.temperature);		  
-			console.log(message.temperature);
-			if(message.temperature == "ok")
-			{
-				$('#ledTemperature').attr('src','images/ledVerte.png');
-			}
-			else if(message.temperature == "nok")
-			{
-				$('#ledTemperature').attr('src','images/ledRouge.png');
-			}
-		})
+		<!-- socket.on('temperature', function(message) {				<!-- Update temperature --> -->
+			<!-- //alert('temperature : ' + message.temperature);		   -->
+			<!-- console.log(message.temperature); -->
+			<!-- if(message.temperature == "ok") -->
+			<!-- { -->
+				<!-- $('#ledTemperature').attr('src','images/ledVerte.png'); -->
+			<!-- } -->
+			<!-- else if(message.temperature == "nok") -->
+			<!-- { -->
+				<!-- $('#ledTemperature').attr('src','images/ledRouge.png'); -->
+			<!-- } -->
+		<!-- }) -->
 		
 		socket.on('tenderlift', function(message) {				<!-- Update position tenderlift via socket -->
 			//alert('temperature : ' + message.temperature);
