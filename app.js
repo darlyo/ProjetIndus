@@ -25,6 +25,7 @@ var downState = false;
 var motor = 0;
 var temp = 1;
 var pres = 0;
+var amp = 0;
 
 //timeout Connexion user
 var timeOutInvite = 240000; 		// milliseconde
@@ -47,38 +48,44 @@ client.connect(PORT, HOST, function() {
 
 client.on('data', function(data) {
 	var res = data.toString('hex');
-	var i = res.indexOf("4307");
-	var dataHex = res.substr(i,22);
-	//console.log('Received: ' + dataHex);
-	var lenght = 29;
-	while( res.length >= lenght)
+	//console.log('Received: ' + res);
+
+	var i = res.indexOf("4308");
+	var j = 24;//res.indexOf("43",i+1);
+	//if (j == -1) j = res.lenght-i;
+	var dataHex = res.substr(i,j);
+	while( i != -1)
 	{
-		res = res.substr(i+lenght+1,res.length-i-lenght+1);
+		res = res.substr(j+1,res.length-(j+1));
 		var size = dataHex.length;
-		var id = parseInt(dataHex.slice(4,10));
+		var id = parseInt(dataHex.slice(4,10),16);
 
-		if(( size == lenght) && (id == 4 ))
+		console.log('Received: ' + dataHex);
+		console.log(dataHex.slice(2,4));
+		var dlc = parseInt(dataHex.slice(2,4),16)-3;
+		var msg =  dataHex.slice(10,10+dlc*2);
+		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
+		
+		if(id == 4 )// && ( size == lenght))
 		{
-			var dlc = parseInt(dataHex.slice(2,4))-3;
-			var msg =  dataHex.slice(10,10+dlc*2);
-			//console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
+			motor = parseInt(msg.slice(0,2));
+			io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+			io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 
-				motor = parseInt(msg.slice(0,2));
-				io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
-				io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+			// temp = parseInt(msg.slice(2,4));
+			// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
 
-				// temp = parseInt(msg.slice(2,4));
-				// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+			pres = swapEndianness(parseInt(msg.slice(2,6),16));
+			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+			
+			//amp = swapEndianness(parseInt(msg.slice(6,10),16));
+			amp = parseInt(msg.slice(6,10),16);
+			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
 
-				pres = swapEndianness(parseInt(msg.slice(2,10),16));
-				io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-				
-				amp = = swapEndianness(parseInt(msg.slice(10,18),16));
-				io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
-
-
-			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' amp);
+			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
 		}
+		var i = res.indexOf("4308");
+		var dataHex = res.substr(i,j);
 	}
 });
 
@@ -97,21 +104,8 @@ client.on('error', function() {
 
 server.listen(3300);
 
-
-// view engine setup
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'pug');
-
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-//app.use(logger('dev'));
 app.use(bodyParser.json());								// communication json
 app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(cookieParser());
-
-//app.use('/', index);
-//app.use('/users', users);
-//app.use('/images', img)
 
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));

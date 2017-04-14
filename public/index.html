@@ -233,7 +233,7 @@
 
         var g1 = new JustGage({
             id: "g1",
-            value: 500,
+            value: 0,
             min: 0,
             max: 1000,
 			title: "Pression",
@@ -361,14 +361,19 @@
 		socket.on('message', function(message) {							<!-- Msg connexion -->
 			//alert('Le serveur a un message pour vous : ' + message.content);
 			console.log(message.content);
-		})
+		});
 					
 		socket.on('update pression', function(message) {				<!-- Update pression via socket -->
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
 			gg1.refresh(message.pression);
-		})
-					
+		});
+			
+		socket.on('update amp', function(message) {				<!-- Update amperage via socket -->
+			console.log(message.amperage);
+			gg2.refresh(message.amperage);
+		});
+		
 		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
 			//alert('moteur : ' + message.moteur);
 			console.log(message.moteur);
@@ -380,7 +385,7 @@
 			{
 				$('#ledMoteur').attr('src','images/ledRouge.png');
 			}
-		})
+		});
 					
 		<!-- socket.on('temperature', function(message) {				<!-- Update temperature --> -->
 			<!-- //alert('temperature : ' + message.temperature);		   -->
@@ -414,7 +419,7 @@
 				}
 			}
 			
-		})
+		});
 		
 		return 0;
 	}
@@ -430,6 +435,7 @@
 		{
 			if(controleButtonPressed && ($('#flecheHaut').disabled == ''))								// SI homme mort on monte la passerelle
 			{
+				console.log('Bouton monter passerelle');
 				$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton (gitan) on peut aussi avec css ou attr -->
 				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
 			}
@@ -439,6 +445,7 @@
 		{
 			if(controleButtonPressed)
 			{
+				console.log('Bouton descente passerelle');
 				$('#flecheHaut').attr('class','btn btn-primary');		
 				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);		// arrêt montée
 			}
@@ -450,6 +457,7 @@
 		{
 			if($('#controleCheck').is(':checked'))					// on verifie la securite avec checkbox puis POST : Monter Passerelle Click
 			{
+				console.log('Bouton descente passerelle');
 				$('#flecheHaut').attr('class','btn btn-secondary');							// Changer couleur bouton
 				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost);
 			}
@@ -474,6 +482,7 @@
 		{
 			if(controleButtonPressed && ($('#flecheBas').disabled == ''))	// Si securite on descend
 			{
+				console.log('Bouton descente passerelle');
 				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
 				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);
 			}
@@ -494,6 +503,7 @@
 		{
 			if($('#controleCheck').is(':checked'))			// si secutite checkbox activee
 			{
+				console.log('Bouton descente passerelle');
 				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
 				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);				// on post
 			}
