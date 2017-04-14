@@ -209,6 +209,7 @@
 	var controleButtonPressed = false;
 
 	var etatTDL = "droit";
+	var g1, g2;
 		
 	$("#contentAdmin").hide();
 	
@@ -231,7 +232,7 @@
 //------------------------------------------------------------------------------------------------------------------------------- 	
 	document.addEventListener("DOMContentLoaded", function(event) {
 
-        var g1 = new JustGage({
+        g1 = new JustGage({
             id: "g1",
             value: 0,
             min: 0,
@@ -248,7 +249,7 @@
 			titleFontColor : "#000000"
         });
 		
-		var g2 = new JustGage({
+		g2 = new JustGage({
             id: "g2",
             value: 0,
             min: 0,
@@ -366,12 +367,12 @@
 		socket.on('update pression', function(message) {				<!-- Update pression via socket -->
 			//alert('pression : ' + message.pression);
 			console.log(message.pression);
-			gg1.refresh(message.pression);
+			g1.refresh(message.pression);
 		});
 			
 		socket.on('update amp', function(message) {				<!-- Update amperage via socket -->
 			console.log(message.amperage);
-			gg2.refresh(message.amperage);
+			g2.refresh(message.amperage);
 		});
 		
 		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->

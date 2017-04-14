@@ -3,6 +3,7 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
 var net = require('net');
+var io = require('socket.io');
 
 // Variables reseau Can
 
@@ -78,8 +79,8 @@ client.on('data', function(data) {
 			pres = swapEndianness(parseInt(msg.slice(2,6),16));
 			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
 			
-			//amp = swapEndianness(parseInt(msg.slice(6,10),16));
-			amp = parseInt(msg.slice(6,10),16);
+			amp = swapEndianness(parseInt(msg.slice(6,10),16));
+			//amp = parseInt(msg.slice(6,10),16);
 			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
 
 			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
