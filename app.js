@@ -90,6 +90,7 @@ client.on('data', function(data) {
 	}
 });
 
+// action sur la communcation avec le cr3131
 client.on('close', function() {
 	console.log('Connection closed');
 });
@@ -108,10 +109,13 @@ server.listen(3300);
 app.use(bodyParser.json());								// communication json
 app.use(bodyParser.urlencoded({ extended: false }));
 
+//----------------------Contruction des routes -------------------------------------------
+//Page d'accueil
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));
 });
 
+//reception d'une comande pour monter la passerelle
 app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	//upState = !upState;
 	//downState = false;
@@ -124,6 +128,7 @@ app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	io.emit()
 });
 
+//reception d'une comande pour descendre la passerelle
 app.post('/descendrePasserelle', function(req, res){			// Descendre
 	//upState = false;
 	//downState = !downState;
@@ -136,7 +141,11 @@ app.post('/descendrePasserelle', function(req, res){			// Descendre
 	res.send({success:true});
 });
 
-
+//demande d'authentification
+//	USER 		|		PASSWORD 
+// 	admin				admin
+//	jeanJacque			jeanJacque
+//	Benoit				Benoit
 app.post('/authentification', function(req,res){				// Auth admin et utilisateurs tenderlift
 	
 	var usrName = req.body.name;
@@ -185,7 +194,7 @@ app.post('/authentification', function(req,res){				// Auth admin et utilisateur
 	}
 });
 
-
+//demande d'authentification entant qu'invité
 app.post('/invite', function(req, res){				// invite requete
 	var response = req.body.demande;
 	
