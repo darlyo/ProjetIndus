@@ -51,19 +51,22 @@ client.on('data', function(data) {
 	var res = data.toString('hex');
 	//console.log('Received: ' + res);
 
-	var i = res.indexOf("4308");
-	var j = 24;//res.indexOf("43",i+1);
+	var i = res.indexOf("43");
+	var j;
 	//if (j == -1) j = res.lenght-i;
-	var dataHex = res.substr(i,j);
 	while( i != -1)
 	{
+		var dlc = parseInt(res.slice(i+2,i+4),16)-3;
+		j = i+13+dlc*2;
+		var dataHex = res.substr(i,j+1);
 		res = res.substr(j+1,res.length-(j+1));
+
 		var size = dataHex.length;
 		var id = parseInt(dataHex.slice(4,10),16);
 
-		console.log('Received: ' + dataHex);
-		console.log(dataHex.slice(2,4));
-		var dlc = parseInt(dataHex.slice(2,4),16)-3;
+		console.log('MSG Received: ' + dataHex);
+		//console.log('rest Received: ' + res);
+
 		var msg =  dataHex.slice(10,10+dlc*2);
 		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
 		
@@ -85,8 +88,7 @@ client.on('data', function(data) {
 
 			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
 		}
-		var i = res.indexOf("4308");
-		var dataHex = res.substr(i,j);
+		var i = res.indexOf("43");
 	}
 });
 
