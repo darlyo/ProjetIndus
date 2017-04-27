@@ -45,12 +45,12 @@ function checksum(s)
 	// console.log(C);
 	return C;
 }
-
+//-----------------Conersion Can to entier --------------------------
 //BYTE	0				255				8 Bit
 // USINT:	0				255				8 Bit
 function canToByte(v){
 	var s1 = createBinaryString('0x'+v,8);
-	console.log(parseInt(s1,2);
+	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -59,7 +59,7 @@ function canToByte(v){
 function canToWord(v){
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1,16);
-	console.log(parseInt(s1,2);
+	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -68,7 +68,7 @@ function canToWord(v){
 function canToDWord(v){
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1);
-	console.log(parseInt(s1,2);
+	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -77,7 +77,7 @@ function canToSInt(v)
 {
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1,8);
-	var res = parseInt(s1,2)
+	var res = parseInt(s1,2);
 	if (res >= 128)
 		res = res - 128*2;
 	return res;
@@ -88,7 +88,7 @@ function canToDInt(v)
 {
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1);
-	var res = parseInt(s1,2)
+	var res = parseInt(s1,2);
 	if (res >= 2147483648)
 		res = res - 2147483648*2;
 	return res;
@@ -100,12 +100,89 @@ function canToInt(v)
 	// console.log(v);
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1,16);
-	var res = parseInt(s1,2)
+	var res = parseInt(s1,2);
 	// console.log(res);
 	// console.log('comp '+createBinaryString(s1 & 0x8000));
 	if (res >= 32768)
 		res = res - 32768*2;
 	console.log(res +'\n');
+	return res;
+}
+
+//-------------------------Conversion Entier to Can-------------------------
+//BYTE	0				255				8 Bit
+// USINT:	0				255				8 Bit
+function byteToCan(v){
+	var res = '' + v.toString(16);
+	while (res.length < 2) res = '0' + res;
+	// console.log(res+'\n');
+	return res;
+}
+
+// WORD 	0				65535			16 Bit
+// UINT:	0				65535			16 Bit
+function wordToCan(v){
+	var res = ''+v.toString(16);
+	while (res.length < 4) res = '0' + res;
+	res = swapEndianness(res);
+	// console.log(res+'\n');
+	return res;
+}
+
+// DWORD	0				4294967295		32 Bit
+// UDINT:	0				4294967295		32 Bit
+function dWordToCan(v){
+	var res = ''+v.toString(16);
+	while (res.length < 8) res = '0' + res;
+	res = swapEndianness(res);
+	console.log(res+'\n');
+	return res;
+}
+
+// SINT: 	-128			127				8 Bit
+function sIntToCan(v)
+{
+	if((v<-128) ||(v>127))
+		return NaN;
+
+	var v1 = v<0?-v:v;
+	// console.log(v);
+	v1 = (v <0) && (v != -128)? v1+0x80:v1;
+	res = ''+v1.toString(16);
+	while (res.length < 2) res = '0' + res;
+	// console.log(res+'\n');
+	return res;
+}
+
+// DINT:	-2147483648		2147483647		32 Bit
+function dIntToCan(v)
+{
+	if((v<-2147483648) ||(v>2147483647))
+		return NaN;
+
+	var v1 = v<0?-v:v;
+	console.log(v);
+	v1 = (v <0) && (v != -2147483648)? v1+0x80000000:v1;
+	res = ''+v1.toString(16);
+	while (res.length < 8) res = '0' + res;
+	res = swapEndianness(res);
+	console.log(res+'\n');
+	return res;
+}
+
+// INT:	-32768			32767			16 Bit	
+function intToCan(v)
+{
+	if((v<-32768) ||(v>32767))
+		return NaN;
+
+	var v1 = v<0?-v:v;
+	console.log(v);
+	v1 = (v <0) && (v != -32768)? v1+0x8000:v1;
+	res = ''+v1.toString(16);
+	while (res.length < 4) res = '0' + res;
+	res = swapEndianness(res);
+	console.log(res+'\n');
 	return res;
 }
 
@@ -150,10 +227,12 @@ function buildMsg(id, map){
 	buffer.writeUIntBE(down, 6, 1);
 	buffer.writeUIntBE(eof, 7, 2);
 }
-checksum('43050000010100');
-canToInt('0180');
-canToInt('0100');
-canToInt('ffff');
-canToInt('ff7f');
+// checksum('43050000010100');
+intToCan(-32768);
+intToCan(-1);
+intToCan(0);
+intToCan(1);
+intToCan(32767);
 
-console.log((-10).toString(16));
+
+// console.log((-10).toString(16));
