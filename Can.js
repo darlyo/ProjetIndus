@@ -1,3 +1,9 @@
+function padStart(str, count) {
+		str += ''; 
+		while(str.length < count)
+			str = '0'+str;
+    return str;
+};
 
 //Chnage le format endainness
 // Parmametre: un entier
@@ -31,10 +37,11 @@ function createBinaryString (nMask, size = 32) {
 
 
 //calcule le checksum d'un message Can
-// Parametre : message Can (SOF, lenght, commande, data-bytes)
+// Parametre : message Can (SOF, length, commande, data-bytes)
 // Return : XOR checksum
 function checksum(s)
 {
+	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
 	var a = s.match(/../g);             // split number in groups of two
 	var C = a[0];
 	for( var i=1; i<a.length;i++ )
@@ -110,7 +117,7 @@ function canToInt(v)
 }
 
 //-------------------------Conversion Entier to Can-------------------------
-//BYTE	0				255				8 Bit
+// BYTE		0				255				8 Bit
 // USINT:	0				255				8 Bit
 function byteToCan(v){
 	var res = '' + v.toString(16);
@@ -193,46 +200,88 @@ function intToCan(v)
 //			la clé correspond au type de donnée (Int, Bool, ...)
 //			la valeur est la donnée envoyé
 //Return: une string contenant le message valide
-function buildMsg(id, map){
+// !!! manque la gestion du real
+function buildMsg(id, tab){
 	
 	var sof = 0x43;
-	var dlc = 3;
-	var data;
+	var dlc = 0;
+	var data ='';
+	console.log('size tab ='+tab["length"]);
 	//extraction des donnée de map
-	for (var [cle, valeur] of maMap.entries()) {
-		console.log(cle + " = " + valeur);
-		switch (cle){
+	for (var i =0; i<tab["length"];i++) {
+		// console.log(tab[i].type + " = " + tab[i].value);
+		var v;
+		switch (tab[i].type){
+			case 'byte':
+				v = byteToCan(tab[i].value);
+				break;
+			case 'word':
+				v = wordToCan(tab[i].value);
+				break;
+			case 'dword':
+				v = dWordToCan(tab[i].value);
+				break;
+			case 'sint':
+				v = sIntToCan(tab[i].value);
+				break;
+			case 'usint':
+				v = byteToCan(tab[i].value);
+				break;
 			case 'int':
-				dlc += 3;
-				// data += 
+				v = intToCan(tab[i].value);
+				break;
+			case 'uint':
+				v = wordToCan(tab[i].value);
+				break;
+			case 'dint':
+				v = dIntToCan(tab[i].value);
+				break;
+			case 'udint':
+				v = dWordToCan(tab[i].value);
 				break;
 			case 'bool':
-			dlc += 1;
-			
-				break;
+				v= tab[i].value?'01':'00';
+				break;			  
 		}
+		// console.log('value :'+v);
+		data += v;
+		// console.log('size elements :' + v.length)
+		dlc += v.length/2;
 	}
-  
-	var check;		// checksum du 
+  // console.log('dlc : '+ dlc);
+  // console.log('data :'+data);
+	var cmd = dlc +3
 	var eof = 0x0d; 
 	
+	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
+	// console.log('msg :'+msg);
+	var check = ''+checksum(msg);		// checksum du 
+  // console.log('check :'+check);
+
 	// compute the required buffer length
-	var bufferSize = 2 + dlc + 2;
+	var bufferSize = 2 + 3 + dlc + 2;
 	var buffer = new Buffer(bufferSize);
+	buffer.fill(0);
 
 	// store first byte on index 0;
-	buffer.writeUInt16BE(sof, 0);
+	buffer.writeUIntBE(sof, 0,1);
+	buffer.writeUIntBE(dlc+3, 1, 1);
 	buffer.writeUIntBE(id, 2, 3);
-	buffer.writeUIntBE(up, 5, 1);
-	buffer.writeUIntBE(down, 6, 1);
-	buffer.writeUIntBE(eof, 7, 2);
-}
-// checksum('43050000010100');
-intToCan(-32768);
-intToCan(-1);
-intToCan(0);
-intToCan(1);
-intToCan(32767);
+	buffer.writeUIntBE('0x'+data, 5, dlc );
+	buffer.writeUIntBE('0x'+check, 5+dlc, 1);
+	buffer.writeUIntBE(eof, 6+dlc, 1);
+	
+  console.log(buffer);
 
+} 
+console.log('debut');
+// checksum('43050000010100');
+// var maMap = new Map();
+// maMap.set('bool',true); 
+// maMap.set('bool',false);
+var tab = []
+tab[0] = {type: 'bool', value:true};
+tab[1] = {type: 'bool', value:false};
+buildMsg(1,tab);
 
 // console.log((-10).toString(16));
