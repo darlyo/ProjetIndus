@@ -1,3 +1,5 @@
+import "./Can.js"
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -53,24 +55,28 @@ client.on('data', function(data) {
 
 	var i = res.indexOf("43");
 	var j;
-	//if (j == -1) j = res.lenght-i;
 	while( i != -1)
 	{
+		//récupération de la longueur du message
 		var dlc = parseInt(res.slice(i+2,i+4),16)-3;
+		//calcul de la fin du message
 		j = i+13+dlc*2;
+		//extraction d'un message sur l'ensemble des donnée reçut
 		var dataHex = res.substr(i,j+1);
 		res = res.substr(j+1,res.length-(j+1));
 
 		var size = dataHex.length;
+		//récupération de l'id du message
 		var id = parseInt(dataHex.slice(4,10),16);
 
 		console.log('MSG Received: ' + dataHex);
-		//console.log('rest Received: ' + res);
 
+		//récupération des donnée du message
 		var msg =  dataHex.slice(10,10+dlc*2);
 		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
 		
-		if(id == 4 )// && ( size == lenght))
+		//traitement des données en fonction de l'id
+		if(id == 4 )
 		{
 			motor = parseInt(msg.slice(0,2));
 			io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
@@ -79,15 +85,24 @@ client.on('data', function(data) {
 			// temp = parseInt(msg.slice(2,4));
 			// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
 
-			pres = swapEndianness(parseInt(msg.slice(2,6),16));
+			pres = parseInt(swapEndianness(msg.slice(2,6)),16);
 			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
 			
-			amp = swapEndianness(parseInt(msg.slice(6,10),16));
+			amp = parseInt(swapEndianness(msg.slice(6,10)),16);
 			//amp = parseInt(msg.slice(6,10),16);
 			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
 
 			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
 		}
+		if (id == 2)
+		{
+			console.log('Envoie de cmd can');
+			sendCan(true,true);
+			console.log(parseInt(msg,16));
+			amp = swapEndianness(msg);
+			console.log(amp);
+		}
+		//debut du prochain message
 		var i = res.indexOf("43");
 	}
 });
@@ -214,8 +229,8 @@ app.post('/invite', function(req, res){				// invite requete
 	
 });
 
-
-app.post('/decoUser', function(req,res){			// disconnect client = delete socket and user
+// disconnect client = delete socket and user
+app.post('/decoUser', function(req,res){			
 	
 	var idUser = req.body.id;
 	
@@ -229,15 +244,15 @@ app.post('/decoUser', function(req,res){			// disconnect client = delete socket 
 	delete tabConnexion[idUser];
 });
 
-app.post('/deleteLastUser', function(req,res){		// quand l'admin n'accepte pas le client on le suppr car il à été rentré
+// quand l'admin n'accepte pas le client on le suppr car il à été rentré
+app.post('/deleteLastUser', function(req,res){		
 	delete tabUser[tabUser.length-1];
 	delete tabConnexion[tabConnexion.lenght-1];
 	delete tabSocket[tabConnexion.lenght-1];
 });
 
-
-app.get('/users', function(req,res){				// renvoi le tableau des invites suite au get
-
+// renvoi le tableau des invites suite au get
+app.get('/users', function(req,res){				
 	res.send({users:tabUser, dateConnexion:tabConnexion});
 });
 
@@ -269,7 +284,7 @@ io.sockets.on('connection', function (socket) {
 	
 	socketU = socket;
 
-    console.log('Un client est connecté !');
+  console.log('Un client est connecté !');
 	var now = new Date();
 	var annee   = now.getFullYear();
 	var mois    = now.getMonth() + 1;
@@ -306,40 +321,10 @@ io.sockets.on('connection', function (socket) {
 	//io.emit('temperature', { temperature: temp==1?'ok':'nok'});
 	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
 	
-	
-	/*var mySqlClient = mysql.createConnection({				// Connexion mysql
-		host     : "localhost",
-		user     : "root",
-		password : "mysql",
-		database : "test"
-	});*/
-	
-	/*var selectQuery = 'SELECT * FROM Users';
- 
-	mySqlClient.query(
-	  selectQuery,
-	  function select(error, results, fields) {
-		if (error) {
-		  console.log(error);
-		  mySqlClient.end();
-		  return;
-		}
-	 
-		if ( results.length > 0 )  { 
-		  var firstResult = results[ 0 ];
-		  console.log('idUsers: ' + firstResult['idUsers']);
-		  console.log('userName: ' + firstResult['userName']);
-		  console.log('userPwd: ' + firstResult['userPwd']);
-		} else {
-		  console.log("Pas de données");
-		}
-		mySqlClient.end();
-	  }
-	);*/
-	
 });
 
-function timeoutConnexion (socket) {			// tempo user function
+// tempo user function
+function timeoutConnexion (socket) {			
   
   if(socket != null)
   {
@@ -352,7 +337,7 @@ function sendCan(UP,DOWN){
 	var up = (UP?1:0).toString(16);
 	var down = (DOWN?1:0).toString(16);
 	var prefix = 0x4305;
-	var id = 1;
+	var id = 10;
 	var suffix = 0x460d;
 	if(up == down)
 		suffix = 0x470d;
@@ -379,42 +364,7 @@ function swapEndianness(v)
 	var a = s.match(/../g);             // split number in groups of two
 	a.reverse();                        // reverse the groups
 	var s2 = a.join("");                // join the groups back together
-	var v2 = parseInt(s2, 16);          // convert to a number
-	return v2;
+	return s2;
 }
-
-
-// catch 404 and forward to error handler
-/*app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-var FS = require('q-io/fs');
-var HTTP = require('q-io/http');
-
-FS.makeTree('/tmp/foo/bar/baz').then(function() {
-  console.log('Path created!');
-});
-
-HTTP.read('http://www.myapifilms.com/imdb?name=Julianne+Moore&filmography=1')
-.then(function(data) {
-  var movies = _.findWhere(data.filmographies, { section: 'Actress' });
-  movies = _.map(movies, function(m) {
-    return m.title + ' (' + m.year + ')';
-  });
-  console.log(movies);
-});*/
 
 module.exports = app;
