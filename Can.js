@@ -41,16 +41,50 @@ function createBinaryString (nMask, size = 32) {
 // Return : XOR checksum
 function checksum(s)
 {
+	// console.log("DEBUT CHECK");
 	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
+
 	var a = s.match(/../g);             // split number in groups of two
-	var C = a[0];
+	// console.log("valeur :" +a);
+
+	var C1 = a[0].charAt(0);
+	var C2 = a[0].charAt(1);
 	for( var i=1; i<a.length;i++ )
 	{
-		C = C ^ a[i];
+		// console.log("C :"+C1.toString(16) +C2.toString(16)+"  a:"+a[i]);
+		C1 = xor (C1,a[i].charAt(0).toString(16));
+		C2 = xor (C2,a[i].charAt(1).toString(16));
+		// console.log("return :" +C1 + '  '+ C2);
 	}
-	// console.log(a);
-	// console.log(C);
-	return C;
+	// console.log("result :"+C1.toString(16)+C2.toString(16));
+	// console.log("FIN CHECK");
+
+	return ''+C1+C2;
+}
+	
+	
+function xor(a, b) {
+	b = parseInt(b,16);	
+	// console.log("XOR: a="+a+"  b="+b);
+	var a1, a2, a3, a4;
+	var b1, b2, b3, b4;
+  if ((a%2) == 1) a1 = 1; else a1 = 0;
+	if ((a-2>=0) && ((a-2)%4<2)) a2 =1; else a2 =0;
+	if ((a >= 4)&&(a<8)||(a>=12)) a3 =1;else a3 =0;
+	if (a>= 8) a4= 1;else a4=0;
+	// console.log("XOR: a="+a4+a3+a2+a1);
+  if ((b%2) == 1) b1 = 1; else b1 = 0;
+	if ((b-2>=0) && ((b-2)%4<2)) b2 =1; else b2 =0;
+	if ((b >= 4)&&(b<8)||(b>=12)) b3 =1;else b3 =0;
+	if (b>= 8) b4= 1;else b4=0;
+	// console.log("XOR: b="+b4+b3+b2+b1);
+	
+	var r = (a1+b1)%2;
+	r += (a2+b2)%2*2;
+	r += (a3+b3)%2*4;
+	r += (a4+b4)%2*8;
+	// console.log("XOR: "+r);
+	return r;
 }
 //-----------------Conersion Can to entier --------------------------
 //BYTE	0				255				8 Bit
@@ -248,32 +282,31 @@ function buildMsg(id, tab){
 		// console.log('size elements :' + v.length)
 		dlc += v.length/2;
 	}
-  // console.log('dlc : '+ dlc);
-  // console.log('data :'+data);
+  console.log('dlc : '+ dlc);
+  console.log('data :'+data);
 	var cmd = dlc +3
 	var eof = 0x0d; 
 	
 	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
-	// console.log('msg :'+msg);
+	console.log('msg :'+msg);
 	var check = ''+checksum(msg);		// checksum du 
-  // console.log('check :'+check);
+  console.log('check :'+check);
 
 	// compute the required buffer length
-	var bufferSize = 2 + 3 + dlc + 2;
+	var bufferSize = 2 + cmd + 2;
+	// remplie un buffer avec notre tram can
 	var buffer = new Buffer(bufferSize);
 	buffer.fill(0);
-
-	// store first byte on index 0;
-	buffer.writeUIntBE(sof, 0,1);
-	buffer.writeUIntBE(dlc+3, 1, 1);
-	buffer.writeUIntBE(id, 2, 3);
-	buffer.writeUIntBE('0x'+data, 5, dlc );
-	buffer.writeUIntBE('0x'+check, 5+dlc, 1);
+	buffer.writeUIntBE('0x'+msg.slice(0,10),0, 5);
+	buffer.writeUIntBE('0x'+msg.slice(10,msg.length),5, dlc);
+	console.log(buffer);
+	buffer.writeUIntBE('0x'+check,5+dlc, 1);
+	// console.log(buffer);
 	buffer.writeUIntBE(eof, 6+dlc, 1);
 	
   console.log(buffer);
-
 } 
+
 console.log('debut');
 // checksum('43050000010100');
 // var maMap = new Map();
@@ -282,6 +315,9 @@ console.log('debut');
 var tab = []
 tab[0] = {type: 'bool', value:true};
 tab[1] = {type: 'bool', value:false};
-buildMsg(1,tab);
+tab[2] = {type: 'int', value:300};
+tab[3] = {type: 'int', value:15};
+// tab[4] = {type: 'int', value:-1};
+buildMsg(10,tab);
 
 // console.log((-10).toString(16));
