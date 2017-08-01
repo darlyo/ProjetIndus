@@ -1,14 +1,23 @@
-import "./Can.js"
-
+//import
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
 var net = require('net');
 var io = require('socket.io');
+var wait=require('wait.for');
+
+//Mes modules
+var can = require('./can.js')
+var redis = require('./redis.js')
+
+//Lance le serveur en daemon (linux uniqument)
+/*
+require('daemon')();
+console.log(process.pid);					// nouveau pid du serveur NODE.JS
+*/
 
 // Variables reseau Can
-
 var HOST = '192.168.173.246';
 var PORT = 30000;
 
@@ -17,7 +26,6 @@ var authentified = false;
 var numberOfConnexion = 0;
 var numberOfAdmin = 0;
 var socketAdmin;
-var socketU;
 var tabUser = [];
 var tabConnexion = [];
 var tabSocket = [];
@@ -39,8 +47,9 @@ app.use(express.static('public'));		// dossier public pour client
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
 
-var mysql = require('mysql');		// MySQL
-
+//active les notification d'expiration
+redis.init(false);
+redis.setCallbackToken(function(user){console.log("user: "+user+" deco");});
 
 // Communication Can
 var client = new net.Socket();
@@ -50,61 +59,7 @@ client.connect(PORT, HOST, function() {
 });
 
 client.on('data', function(data) {
-	var res = data.toString('hex');
-	//console.log('Received: ' + res);
-
-	var i = res.indexOf("43");
-	var j;
-	while( i != -1)
-	{
-		//récupération de la longueur du message
-		var dlc = parseInt(res.slice(i+2,i+4),16)-3;
-		//calcul de la fin du message
-		j = i+13+dlc*2;
-		//extraction d'un message sur l'ensemble des donnée reçut
-		var dataHex = res.substr(i,j+1);
-		res = res.substr(j+1,res.length-(j+1));
-
-		var size = dataHex.length;
-		//récupération de l'id du message
-		var id = parseInt(dataHex.slice(4,10),16);
-
-		console.log('MSG Received: ' + dataHex);
-
-		//récupération des donnée du message
-		var msg =  dataHex.slice(10,10+dlc*2);
-		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
-		
-		//traitement des données en fonction de l'id
-		if(id == 4 )
-		{
-			motor = parseInt(msg.slice(0,2));
-			io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
-			io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
-
-			// temp = parseInt(msg.slice(2,4));
-			// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
-
-			pres = parseInt(swapEndianness(msg.slice(2,6)),16);
-			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-			
-			amp = parseInt(swapEndianness(msg.slice(6,10)),16);
-			//amp = parseInt(msg.slice(6,10),16);
-			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
-
-			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
-		}
-		if (id == 2)
-		{
-			console.log('Envoie de cmd can');
-			sendCan(true,true);
-			console.log(parseInt(msg,16));
-			amp = swapEndianness(msg);
-			console.log(amp);
-		}
-		//debut du prochain message
-		var i = res.indexOf("43");
-	}
+	readCan(data,traitementMsg);
 });
 
 // action sur la communcation avec le cr3131
@@ -140,22 +95,23 @@ app.post('/monterPasserelle', function(req, res){					// Monter passerelle
 	downState = req.body.down == "true" ? true : false ;
 	console.log('monter Passerelle : up='+upState+ '  ,down='+downState);
 
-	sendCan(upState,downState);
+	sendCMD(upState,downState);
 	res.send({success:true});
-	io.emit()
 });
 
 //reception d'une comande pour descendre la passerelle
 app.post('/descendrePasserelle', function(req, res){			// Descendre
 	//upState = false;
 	//downState = !downState;
-	
-	upState = req.body.up == "true" ? true : false ;
-	downState = req.body.down == "true" ? true : false ;
-	console.log('descendre Passerelle : up='+upState+ '  ,down='+downState);
+	if (req.body.token = wait.launchFiber(redis.getToken))
+	{	
+		upState = req.body.up == "true" ? true : false ;
+		downState = req.body.down == "true" ? true : false ;
+		console.log('descendre Passerelle : up='+upState+ '  ,down='+downState);
 
-	sendCan(upState,downState);
-	res.send({success:true});
+		sendCMD(upState,downState);
+		res.send({success:true});
+	}
 });
 
 //demande d'authentification
@@ -168,61 +124,37 @@ app.post('/authentification', function(req,res){				// Auth admin et utilisateur
 	var usrName = req.body.name;
 	var pwd = req.body.pwd;
 
-	switch (usrName)
-	{
-		case "admin":
-			if(pwd == "admin")
-			{
-				res.send({success:true});
-				authentified = true;
-				numberOfAdmin = 1;
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-			
-		case "jeanJacque":
-			if(pwd == "jeanJacque")
-			{
-				res.send({success:true});
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-		
-		
-		case "Benoit": 
-			if(pwd == "Benoit")
-			{
-				res.send({success:true});
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-	}
+	redis.auth(usrName, pwd, res, callbackAuth);
 });
+
+var callbackAuth = function(statut, res, droit, token)
+{
+	console.log("execute le callback Auth");
+	console.log("statut: "+statut+"  ; droit: "+droit+"  ;token: "+token);
+	switch (statut)
+	{
+		case 1:
+			res.send({"success":true, "token":token, "droit":droit});
+			break;
+		case 0:
+			res.send({"success":false, "info":"mot de passe incorrect"});
+			break;
+		default :
+			res.send({"success":false, "info":"erreur serveur"});
+	}
+}
 
 //demande d'authentification entant qu'invité
 app.post('/invite', function(req, res){				// invite requete
 	var response = req.body.demande;
-	
+	console.log("demande de connection invitée");
 	if(response)
 	{
 		res.send({ success: true });
 		
 		socketAdmin.emit('newInvite', {demande:true});			// on demande a l'admin si on l'accepte
-		
-		console.log("emit");
-	}
+		updateData();
+		}
 	else {
 		//res.send({success:false});
 	}
@@ -234,7 +166,6 @@ app.post('/decoUser', function(req,res){
 	
 	var idUser = req.body.id;
 	
-
 	console.log(idUser);
 	
 	var socketU = tabSocket[idUser];
@@ -257,33 +188,30 @@ app.get('/users', function(req,res){
 });
 
 
-
-// Quand un client se connecte
+// Quand un client se connecte on l'ajoute à la liste des utilsateur connecté et on enregristre la date de connection
+// Pour un invité on demande à l'admin de valide la connection, sinon la connection est refusé
 io.sockets.on('connection', function (socket) {
 
 //remplace l'ancien admin
 	if(socket.handshake.query['admin'] == "true")			// on verifie les donnée dans la requete
 	{
-		if(authentified)
+		//remplacement de l'admin actuel
+		if(numberOfAdmin > 0 && socketAdmin != null)
 		{
-			if(numberOfAdmin > 0 && socketAdmin != null)
+			socketAdmin = socket;		//save admin socket
+		}
+		//enregistrement de l'utilisateur en tant qu'admin
+		else
+		{
+			socketAdmin = socket;
+			socketAdmin.on('disconnect', function () 
 			{
-				socketAdmin = socket;		//save admin socket
-			}
-			else
-			{
-				socketAdmin = socket;
-				socketAdmin.on('disconnect', function () 
-				{
-					console.log("disconnect admin");
-					numberOfAdmin = 0;				// deco admin
-				});
-			}	
+				console.log("disconnect admin");
+				numberOfAdmin = 0;				// deco admin
+			});
 		}
 	}
 	
-	socketU = socket;
-
   console.log('Un client est connecté !');
 	var now = new Date();
 	var annee   = now.getFullYear();
@@ -291,11 +219,11 @@ io.sockets.on('connection', function (socket) {
 	var jour    = now.getDate();
 	var heure   = now.getHours();
 	var minute  = now.getMinutes();
-	
+		
 	var dateUser = jour + '/' + mois + '/' + annee + ':' + heure + ':' + minute;
 	
 	var name = "User" + numberOfConnexion;			// name User
-
+	
 	if(socketAdmin != null)
 	{
 		socketAdmin.on('inviteOk', function (data) {		// si admin ok
@@ -303,6 +231,8 @@ io.sockets.on('connection', function (socket) {
 			io.emit('inviteOkUser', {demande:true});		//  on le notifie au client
 		});
 	}
+	else
+		io.emit('inviteOkUser', {demande:false});		//  demande de connection en invité refué
 
 	if(socket.handshake.query['admin'] != "true" && socket.handshake.query['admin'] != "except")	/* si c'est invite on le rajoute */
 	{
@@ -314,13 +244,12 @@ io.sockets.on('connection', function (socket) {
 		
 		setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function (tempo user)
 	}
+	updateData();
 	
-	io.emit('update pression', { pression: pres.toString() });
-	io.emit('update amp', { amperage: amp.toString() });
-	io.emit('moteur', {moteur: motor==1?'on':'off' });
-	//io.emit('temperature', { temperature: temp==1?'ok':'nok'});
-	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
-	
+});
+
+io.sockets.on('cmd', function (socket) {
+	console.log("cmd via socket reçut");
 });
 
 // tempo user function
@@ -332,39 +261,62 @@ function timeoutConnexion (socket) {
   }
 }
 
-
-function sendCan(UP,DOWN){
-	var up = (UP?1:0).toString(16);
-	var down = (DOWN?1:0).toString(16);
-	var prefix = 0x4305;
-	var id = 10;
-	var suffix = 0x460d;
-	if(up == down)
-		suffix = 0x470d;
-	
-	// compute the required buffer length
-	var bufferSize = 2 + 3 + 2 + 2;
-	var buffer = new Buffer(bufferSize);
-
-	// store first byte on index 0;
-	buffer.writeUInt16BE(prefix, 0);
-	buffer.writeUIntBE(id, 2, 3);
-	buffer.writeUIntBE(up, 5, 1);
-	buffer.writeUIntBE(down, 6, 1);
-	buffer.writeUIntBE(suffix, 7, 2);
-
-	client.write(buffer,'data');
-	console.log('Send    : ' + buffer.toString('hex'));
-}
-
-function swapEndianness(v)
+//Envoie les commande de controle du tenderlift
+//Parametre :
+//	- up 		: boolean
+//	- down 	: boolean
+function sendCMD(up,down)
 {
-	var s = v.toString(16);             // translate to hexadecimal notation
-	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
-	var a = s.match(/../g);             // split number in groups of two
-	a.reverse();                        // reverse the groups
-	var s2 = a.join("");                // join the groups back together
-	return s2;
+	var data =[];
+	data[0] = {type: 'bool', value:up};
+	data[1] = {type: 'bool', value:down};
+	var msg = Buffer.from(can.buildMsg(10,data));
+	console.log('Send    : ' + msg.toString('hex'));
 }
 
-module.exports = app;
+//mise a jour des donnée coté client via socket.io
+function updateData(){
+	io.emit('update pression', { pression: pres.toString() });
+	io.emit('update amp', { amperage: amp.toString() });
+	io.emit('moteur', {moteur: motor==1?'on':'off' });
+	//io.emit('temperature', { temperature: temp==1?'ok':'nok'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+}
+
+//traitement des messages CAN reçut
+var traitementMsg = function(msg)
+{
+	switch (id){
+		case 4:
+		{
+			motor = parseInt(msg.slice(0,2));
+			io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+			io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+
+			// temp = parseInt(msg.slice(2,4));
+			// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+
+			pres = parseInt(can.swapEndianness(msg.slice(2,6)),16);
+			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+			
+			amp = parseInt(can.swapEndianness(msg.slice(6,10)),16);
+			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
+
+			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
+			break;
+		}
+		case 2:
+		{
+			console.log('Envoie de cmd can');
+			sendCMD(true,true);
+			console.log(parseInt(msg,16));
+			amp = can.swapEndianness(msg);
+			console.log(amp);
+		}
+		default :
+		{
+			console.log("id du message: "+id+" n'est pas traité.");
+		}
+	}
+};
+
