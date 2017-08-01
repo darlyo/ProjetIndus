@@ -1,3 +1,13 @@
+//Module de transmition can
+
+//export des functions du module
+module.exports = { 
+    'buildMsg' : buildMsg,
+		'readCan' : readCan,
+		'swapEndianness' : swapEndianness
+}
+
+
 function padStart(str, count) {
 		str += ''; 
 		while(str.length < count)
@@ -45,21 +55,18 @@ function checksum(s)
 	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
 
 	var a = s.match(/../g);             // split number in groups of two
-	// console.log("valeur :" +a);
 
 	var C1 = a[0].charAt(0);
 	var C2 = a[0].charAt(1);
 	for( var i=1; i<a.length;i++ )
 	{
-		// console.log("C :"+C1.toString(16) +C2.toString(16)+"  a:"+a[i]);
 		C1 = xor (C1,a[i].charAt(0).toString(16));
 		C2 = xor (C2,a[i].charAt(1).toString(16));
-		// console.log("return :" +C1 + '  '+ C2);
 	}
 	// console.log("result :"+C1.toString(16)+C2.toString(16));
 	// console.log("FIN CHECK");
 
-	return ''+C1+C2;
+	return ''+C1.toString(16)+C2.toString(16);
 }
 	
 	
@@ -240,7 +247,7 @@ function buildMsg(id, tab){
 	var sof = 0x43;
 	var dlc = 0;
 	var data ='';
-	console.log('size tab ='+tab["length"]);
+	//console.log('size tab ='+tab["length"]);
 	//extraction des donnée de map
 	for (var i =0; i<tab["length"];i++) {
 		// console.log(tab[i].type + " = " + tab[i].value);
@@ -282,15 +289,15 @@ function buildMsg(id, tab){
 		// console.log('size elements :' + v.length)
 		dlc += v.length/2;
 	}
-  console.log('dlc : '+ dlc);
-  console.log('data :'+data);
+  //console.log('dlc : '+ dlc);
+  //console.log('data :'+data);
 	var cmd = dlc +3
 	var eof = 0x0d; 
 	
 	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
-	console.log('msg :'+msg);
+	//console.log('msg :'+msg);
 	var check = ''+checksum(msg);		// checksum du 
-  console.log('check :'+check);
+  //console.log('check :'+check);
 
 	// compute the required buffer length
 	var bufferSize = 2 + cmd + 2;
@@ -299,25 +306,55 @@ function buildMsg(id, tab){
 	buffer.fill(0);
 	buffer.writeUIntBE('0x'+msg.slice(0,10),0, 5);
 	buffer.writeUIntBE('0x'+msg.slice(10,msg.length),5, dlc);
-	console.log(buffer);
+	//console.log(buffer);
 	buffer.writeUIntBE('0x'+check,5+dlc, 1);
-	// console.log(buffer);
+	//console.log(buffer);
 	buffer.writeUIntBE(eof, 6+dlc, 1);
 	
-  console.log(buffer);
+  //console.log(buffer);
+	return buffer;
 } 
 
-console.log('debut');
-// checksum('43050000010100');
-// var maMap = new Map();
-// maMap.set('bool',true); 
-// maMap.set('bool',false);
-var tab = []
+
+function readCan(data, callback)
+{
+	var res = data.toString('hex');
+	//console.log('Received: ' + res);
+
+	var i = res.indexOf("43");
+	var j;
+	while( i != -1)
+	{
+		//récupération de la longueur du message
+		var dlc = parseInt(res.slice(i+2,i+4),16)-3;
+		//calcul de la fin du message
+		j = i+13+dlc*2;
+		//extraction d'un message sur l'ensemble des donnée reçut
+		var dataHex = res.substr(i,j+1);
+		res = res.substr(j+1,res.length-(j+1));
+
+		var size = dataHex.length;
+		
+		//récupération de l'id du message
+		var id = parseInt(dataHex.slice(4,10),16);
+
+		console.log('MSG Received: ' + dataHex);
+
+		//récupération des donnée du message
+		var msg =  dataHex.slice(10,10+dlc*2);
+		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
+		
+		//traitement des données en fonction de l'id
+		callback(msg);
+		//debut du prochain message
+		var i = res.indexOf("43");
+	}
+}
+ //exemple
+/* var tab = []
 tab[0] = {type: 'bool', value:true};
 tab[1] = {type: 'bool', value:false};
-tab[2] = {type: 'int', value:300};
+tab[2] = {type: 'int', value:22};
 tab[3] = {type: 'int', value:15};
-// tab[4] = {type: 'int', value:-1};
-buildMsg(10,tab);
+buildMsg(7,tab); */
 
-// console.log((-10).toString(16));
