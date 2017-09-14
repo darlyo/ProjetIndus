@@ -289,29 +289,38 @@ function buildMsg(id, tab){
 		// console.log('size elements :' + v.length)
 		dlc += v.length/2;
 	}
-  //console.log('dlc : '+ dlc);
-  //console.log('data :'+data);
-	var cmd = dlc +3
+	var sizeID = 3;
+	dlc += sizeID;
+	var cmd =dlc;
+
+  console.log('dlc : '+ dlc);
+  console.log('data :'+data);
 	var eof = 0x0d; 
 	
 	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
-	//console.log('msg :'+msg);
+	// var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),sizeID*2)+data;
+	console.log('msg :'+msg);
 	var check = ''+checksum(msg);		// checksum du 
-  //console.log('check :'+check);
+  // console.log('check :'+check);
 
 	// compute the required buffer length
-	var bufferSize = 2 + cmd + 2;
+	var bufferSize = 2 + dlc + 2;
 	// remplie un buffer avec notre tram can
 	var buffer = new Buffer(bufferSize);
 	buffer.fill(0);
 	buffer.writeUIntBE('0x'+msg.slice(0,10),0, 5);
-	buffer.writeUIntBE('0x'+msg.slice(10,msg.length),5, dlc);
-	//console.log(buffer);
-	buffer.writeUIntBE('0x'+check,5+dlc, 1);
-	//console.log(buffer);
-	buffer.writeUIntBE(eof, 6+dlc, 1);
+	buffer.writeUIntBE('0x'+msg.slice(10,msg.length),5, dlc-sizeID);
+	// buffer.writeUIntBE('0x'+msg,0, bufferSize-2);
+	// buffer.writeUIntBE('0x'+check,5+dlc, 1);
+	console.log("1#  : " +buffer.toString('hex'));
+	buffer.writeUIntBE('0x'+check,bufferSize-2, 1);
+	console.log("2#  : " +buffer.toString('hex'));
+
+	// buffer.writeUIntBE(eof, 6+dlc, 1);
+	buffer.writeUIntBE(eof, bufferSize-1, 1);	
+	console.log("3#  : " +buffer.toString('hex'));
+
 	
-  //console.log(buffer);
 	return buffer;
 } 
 
@@ -345,7 +354,7 @@ function readCan(data, callback)
 		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
 		
 		//traitement des données en fonction de l'id
-		callback(msg);
+		callback(msg,id);
 		//debut du prochain message
 		var i = res.indexOf("43");
 	}

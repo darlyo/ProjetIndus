@@ -1,39 +1,67 @@
 
-
 	var socket;
 	var socketAdmin;
-	var isPc = false;
-	var isPortable = false;
 	var tailleDivAdmin = 55;			// modif taille div userArray on new invite
-	var droit =0;
+	
+	var droit =0;				//droit associer à l'utilisateur connecté:  1-admin		2-user
+	var token = null;		//token envoyé pour vérifié la comunication
+	var name = null;
 	
 	var newURL = window.location.protocol + "//" + window.location.host;
+	
+	//bouton de sécurité pour l'envoie de commande
 	var controleButtonPressed = false;
-
+	var isPc = false;
+	var isPortable = false;
+	
 	var etatTDL = "droit";
-	var g1, g2;
+	var g1, g2;		//gauges
 		
+	var init=true;
+	var heightPageAdmin;
+	if (init)
+	{
+		heightPageAdmin = $("#contentAdmin").height();	
+		init = false;
+	}
+	
 	//----- Changement d'onglet en administrateur
 	$("#contentAdmin").hide();
-	
+	if(droit != 1)
+		document.getElementById('admin').disabled = 'disabled';
+	else
+		document.getElementById('admin').disabled = '';
+
+		
 	$('#home').on('click', function() 		
 	{
-		if(droit == 1)
-		{
-			$("#contentAdmin").hide();
-			$("#contentHome").show();
-		}
+		$("#contentAdmin").hide();
+		$("#contentHome").show();
 	});
 	
 	$('#admin').on('click', function() 	
 	{
 		if(droit == 1)
 		{
+			refreshTabInvit();
 			$("#contentAdmin").show();
 			$("#contentHome").hide();
 		}
 	});
 	
+	$(window).bind('beforeunload',function(){
+
+		griserBoutons();
+
+		socket.close();
+		droit =0;				//droit associer à l'utilisateur connecté:  1-admin		2-user
+		token = null;		//token envoyé pour vérifié la comunication
+		name = null;
+		socket = null;
+		socketAdmin =null;
+		
+		$('#controleCheck').prop("checked", false);
+});
 	refreshTabInvit();						//  refresh au cas ou si on actualise la page on affiche
 	
 //--------------------------------------------------------------------------
@@ -95,15 +123,17 @@
 		controlMouvement.addEventListener('touchend', function(e){
 				controleButtonPressed =false;
 				$('#flecheHaut').attr('class','btn btn-primary');								<!-- Changer couleur bouton on peut aussi avec le css ou attr de la balise -->
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 			<!-- post json puis callbackPost -->
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 				$('#flecheBas').attr('class','btn btn-primary');		
 				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 
 			})
 			
 		controlMouvement.addEventListener('touchleave', function(e){
 				controleButtonPressed =false;
-				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);
+				$('#flecheHaut').attr('class','btn btn-primary');
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 				$('#flecheBas').attr('class','btn btn-primary');		
 				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
 			})
@@ -111,7 +141,8 @@
 		controlMouvement.addEventListener('touchcancel', function(e){
 				controleButtonPressed =false;
 				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name}); 
 				$('#flecheBas').attr('class','btn btn-primary');
 				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
 			})
@@ -170,8 +201,7 @@
 //----------------------------Mise à jour des données---------------------------------------------
 //------------------------------------------------------------------------------------------------
 
-	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
-	{
+	function connexionDataSocket(socket){ 			<!------ Fonction de com par socket -------------------------------->
 		
 		socket.on('message', function(message) {							<!-- Msg connexion -->
 			//alert('Le serveur a un message pour vous : ' + message.content);
@@ -202,41 +232,90 @@
 			}
 		});
 					
-		<!-- socket.on('temperature', function(message) {				<!-- Update temperature --> -->
-			<!-- //alert('temperature : ' + message.temperature);		   -->
-			<!-- console.log(message.temperature); -->
-			<!-- if(message.temperature == "ok") -->
-			<!-- { -->
-				<!-- $('#ledTemperature').attr('src','images/ledVerte.png'); -->
-			<!-- } -->
-			<!-- else if(message.temperature == "nok") -->
-			<!-- { -->
-				<!-- $('#ledTemperature').attr('src','images/ledRouge.png'); -->
-			<!-- } -->
-		<!-- }) -->
+		socket.on('temperature', function(message) {				 //Update temperature  
+			console.log(message.temperature); 
+			if(message.temperature == "ok") 
+				$('#ledTemperature').attr('src','images/ledVerte.png'); 
+			else if(message.temperature == "nok") 
+				$('#ledTemperature').attr('src','images/ledRouge.png'); 
+		});
 		
-		socket.on('tenderlift', function(message) {				<!-- Update position tenderlift via socket -->
+		socket.on('tenderlift', function(message) {					//Update position tenderlift via socket
 			//alert('temperature : ' + message.temperature);
 			if (message.position != etatTDL )
 			{
 				etatTDL = message.position;
 				if(message.position == "montee")
-				{
 					$('#tdl').attr('src','images/monte.gif');
-				}
 				else if(message.position == "descente")
-				{
 					$('#tdl').attr('src','images/descente.gif');
-				}
 				else if(message.position == "droit")
-				{
 					$('#tdl').attr('src','images/TDL-5.png');
-				}
 			}
-			
 		});
 		
-		return 0;
+		socket.on('timeoutConnexion', function(message)								// if timeout Connexion
+		{		
+			alert("Deconnexion");
+			griserBoutons();
+			
+			document.getElementById("alert").className = "alert alert-danger";
+			document.getElementById("alert-text").innerHTML  = " Session expirée";
+			socket.close();
+		});
+	}
+	
+	function callbackAuth(message, status){
+		console.log("retour authentification "+message);
+		if(message.success)				// Si donnees auth ok 
+		{	
+			$("#modalAuth").modal('hide');		// ferme modal d'authentification
+
+			droit = message.droit;
+			token = message.token;
+			name = message.name;
+			
+			console.log("success sendButton");
+			degriserBoutons();
+			socket = io.connect(newURL, { query: {'name':name}});			// Connexion Socket 
+			//socket = io.connect(newURL, {'name':name, 'droit':droit, 'token':token});			// Connexion Socket 
+			connexionDataSocket(socket);			// Connexion pour recevoir les données 
+			
+			document.getElementById("alert").className = "alert alert-success";
+			document.getElementById("alert-text").innerHTML  = " Bienvenu "+message.name;
+			$("#modalAuth").modal('hide');		// ferme modal
+			
+			if(droit == 1)		// Si on se connecte avec les droit d'amin on ouvre la popup admin
+			{
+				//on definit l'utilisateur comme admin en charge de invitation
+				socket.emit('isAdmin', { "name":name, "token":token });
+
+				//acceptation Inviter en Admin uniquement
+				socket.on('newInvite', function(message) 						// quand un nouvel invite on demande accptation
+				{		
+					$("#modalAccept").modal('show');						// popup accept ou non invite
+						
+					$('#acceptButton').on('click', function()			
+					{	
+						refreshTabInvit();
+						socket.emit('inviteOk', {data:"invite", "token":token});				// on envoie la confirmation accpte user
+						$("#modalAccept").modal('hide');				
+					});
+					$('#declineButton').on('click', function()			
+					{	
+						socket.emit('inviteNon', {data:"invite", "token":token});				// on envoie la confirmation accpte user
+						$("#modalAccept").modal('hide');				
+					});
+				});
+			}
+		}
+		else
+		{
+			document.getElementById("alert").className = "alert alert-danger";
+			document.getElementById("alert-text").innerHTML  = " Echec connexion";
+			console.log(" Echec connexion: "+ message.info);
+			$("#messageInfo").html(" Echec connexion: "+ message.info);
+		}
 	}
 
 //-------------------------------------------------------------------------------------------
@@ -253,7 +332,8 @@
 			{
 				console.log('Bouton monter passerelle');
 				$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton (gitan) on peut aussi avec css ou attr -->
-				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
+				if (socket != null)
+					socket.emit('cmd_up',{'token':token, 'name':name});
 			}
 		});
 		  
@@ -263,7 +343,8 @@
 			{
 				console.log('Bouton descente passerelle');
 				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);		// arrêt montée
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 			}
 	    });
 	}	
@@ -275,16 +356,24 @@
 			{
 				console.log('Bouton descente passerelle');
 				$('#flecheHaut').attr('class','btn btn-secondary');							// Changer couleur bouton
-				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost);
-				socket.emit('cmd', {TDL:"up"});
+				if (socket != null)
+					socket.emit('cmd_up',{'token':token, 'name':name});
 			}
-		}).on('mouseup', function()											 <!-- POST : Monter Passerelle release -->
+		}).on('mouseup', function()											 // POST : Monter Passerelle release -->
 		{
 			if($('#controleCheck').is(':checked'))
 			{
-				$('#flecheHaut').attr('class','btn btn-primary');		<!-- Changer couleur bouton -->
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json puis callbackPost -->
-				socket.emit('cmd', {TDL:"stop"});
+				$('#flecheHaut').attr('class','btn btn-primary');														//Changer couleur bouton 
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
+			}
+		}).on('mouseout', function()											// POST : Monter Passerelle release -->
+		{
+			if($('#controleCheck').is(':checked'))
+			{
+				$('#flecheHaut').attr('class','btn btn-primary');													// Changer couleur bouton 
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 			}
 		});
 	}
@@ -303,7 +392,8 @@
 			{
 				console.log('Bouton descente passerelle');
 				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
-				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);
+				if (socket != null)
+					socket.emit('cmd_down',{'token':token, 'name':name});
 			}
 		});
 		  
@@ -312,7 +402,8 @@
 			if(controleButtonPressed)
 			{
 				$('#flecheBas').attr('class','btn btn-primary');		
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 		// on envoi arrêt
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 			}
 	    });
 	}
@@ -324,20 +415,27 @@
 			{
 				console.log('Bouton descente passerelle');
 				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
-				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);				// on post
-				socket.emit('cmd', {TDL:"down"});
+				if (socket != null)
+					socket.emit('cmd_down',{'token':token, 'name':name});
 			}
 		}).on('mouseup', function() 						// POST : Descendre Passerelle release
 		{
 			if($('#controleCheck').is(':checked'))
 			{
 				$('#flecheBas').attr('class','btn btn-primary');
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);				// Arrêt
-				socket.emit('cmd', {TDL:"stop"});
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
+			}
+		}).on('mouseout', function() 						// POST : Descendre Passerelle release
+		{
+			if($('#controleCheck').is(':checked'))
+			{
+				$('#flecheBas').attr('class','btn btn-primary');
+				if (socket != null)
+					socket.emit('cmd_stop',{'token':token, 'name':name});
 			}
 		});
 	}
-
 	
 
 //------------------------------------------------------------------------------------
@@ -348,95 +446,29 @@
 	{											// Send button modal Auth
 		var userName = $('#usr').val();
 		var userPwd = $('#pwd').val();
-		
-		$.post(newURL+"/authentification", {name:userName,pwd:userPwd} ,callbackPostSend); <!-- post json -->
-		
-		function callbackPostSend(data, status)
-		{
-			console.log(status);
-			console.log("callbackPostSend  :"+data.success);
-			//if(status == "success")				// Si requete ok 
-			if(data.success)				// Si donnees auth ok 
-			{	
-				if(userName == "admin")		// Si on se connecte en admin on ouvre la popup admin
-				{
-					socket = io.connect(newURL, { query: "admin=true" });				// Connexion Socket admin
-					console.log("success sendButton");
-					
-					degriserBoutons();	
-					
-					connexionDataSocket(socket);			// Connexion pour recevoir les données 
-					
-					document.getElementById("alert").className = "alert alert-success";
-					document.getElementById("alert-text").innerHTML  = " Bienvenu Admin";
-					$("#modalAuth").modal('hide');		// ferme modal
-					
-					//acceptation Inviter en Admin uniquement
-					socket.on('newInvite', function(message) 						// quand un nouvel invite on demande accptation
-					{		
-						$("#modalAccept").modal('show');						// popup accept ou non invite
-							
-						$('#acceptButton').on('click', function()			
-						{	
-							refreshTabInvit();
-							socket.emit('inviteOk', {data:"invite"});				// on envoie la confirmation accpte user
-							$("#modalAccept").modal('hide');				
-						});
-						
-						$("#refuseInvButton").on('click', function()			// decline : invite = on suppr le last invite avec le post du user avec le dernier id
-						{				
-								$.post(newURL +"/deleteLastUser",callbackPost);			// Si admin deco user on post une suppression
-											
-								function callbackPost(data, status)
-								{
-									console.log(status);
-									console.log(data.success);
-													
-									if(status == "success")
-									{
-										if(data.success)
-										{
-											console.log("success decoButton");
-										}
-										else
-										{
-											console.log("fail decoButton");
-										}
-									}
-								}
-						});
-					});
-				}
-				else				
-				{
-					socket = io.connect(newURL, { query: "admin=except" });				// Connexion Socket utilisateur tenderlift
-					console.log("success sendButton for users");
-					
-					degriserBoutons();	
-					
-					connexionDataSocket(socket);			// Connexion pour recevoir les données 
-					
-					document.getElementById("alert").className = "alert alert-success";
-					document.getElementById("alert-text").innerHTML  = " Bienvenu";
-					$("#modalAuth").modal('hide');		// ferme modal
-				}
-			}
-			else
-			{
-			
-				document.getElementById("alert-text").innerHTML  = " Echec connexion";
-				console.log("fail sendButton");
-				$("#messageInfo").html("Erreur Authentification");
-			}
-			
-		}
+
+		//socket = io.connect(newURL);				// Connexion Socket admin
+		//socket.emit('auth', { "user":userName, "pwd":userPwd });
+		//interfaceSocket(socket);
+		$.post(newURL+"/authentification", {"name":userName,"pwd":userPwd},callbackAuth); 
 	});
 	
 	$('#disconnectButton').on('click', function() <!--- Deconnexion -->
 	{
 		griserBoutons();
+		$.post(newURL +"/decoUser", {'name': name});					// ddéconnecte l'utilisateur courant
 
 		socket.close();
+		droit =0;				//droit associer à l'utilisateur connecté:  1-admin		2-user
+		token = null;		//token envoyé pour vérifié la comunication
+		name = null;
+		socket = null;
+		socketAdmin =null;
+		
+		$("#contentAdmin").hide();
+		$("#contentHome").show();
+		$('#controleCheck').prop("checked", false);
+		document.getElementById("alert").className = "alert alert-danger";
 		document.getElementById("alert-text").innerHTML  = " Session fermée";
 	});
 	
@@ -448,7 +480,7 @@
 
 	$('#inviteButton').on('click', function()		// INVITE Button
 	{						
-		$.post(newURL+"/invite", {demande:true} ,callbackPostSend); // post json 
+		$.post(newURL+"/invite",callbackPostSend); // post json 
 		function callbackPostSend(data, status)
 		{
 			console.log(status);
@@ -457,28 +489,34 @@
 			{
 				if(data.success)			// si data ok 
 				{	
-					socket = io.connect(newURL, { query: "admin=false" });			// Connexion Socket 
+					if(socket != null)
+						socket.close();
+					socket = io.connect(newURL, { query: "invite=true" });			// Connexion Socket 
 					console.log("ok socket user invite");
 					
 					socket.on('inviteOkUser', function(message){					// Si l'admin est ok pour l'invite
-					
-						console.log("success inviteButton");
-						
-						degriserBoutons();
-						document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 180 secondes";
-						connexionDataSocket(socket);		// Connexion pour recevoir les données 
-					})
-					
-					socket.on('timeoutConnexion', function(message)								// if timeout Connexion
-					{		
-						alert("Deconnexion");
-						griserBoutons();
-						document.getElementById("alert-text").innerHTML  = " Session expirée";
-						socket.close();
+						if(message.demande){
+							socket.removeListener('inviteOkUser');
+							console.log("success inviteButton");
+							droit = 2;
+							token = message.token;
+							name = message.name;
+			
+							degriserBoutons();
+							document.getElementById("alert").className = "alert alert-success";
+							document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 5 minutes";
+							connexionDataSocket(socket);		// Connexion pour recevoir les données 
+						}
+						else{
+							document.getElementById("alert").className = "alert alert-danger";
+							document.getElementById("alert-text").innerHTML  = " Echec de connexion";
+						}
 					})
 				}
 				else
 				{
+					document.getElementById("alert").className = "alert alert-danger";
+					document.getElementById("alert-text").innerHTML  = " Echec de connexion";
 					console.log("fail invite");
 				}
 			}
@@ -492,7 +530,6 @@
 		function refreshTabInvit()
 		{
 			var userId;
-			var tabId = [];
 			
 			$.get(newURL +"/users",callbackGet);					// demande des users
 			function callbackGet(data, status) 
@@ -501,41 +538,27 @@
 				console.log(data.users[0]);
 				if(status == "success")						// si requete ok on met a jour l'affichage
 				{	
+					// remove previous user array
+					$("#myTable tr").remove();
+					
+					//mise a jour du tableau
 					for(var i =0; i< data.users.length;i++)
 					{
-						tabId.push(parseInt(data.users[i].split("User")[1]));	// recup id user dans la chaine User23 par exmple
-					}
-													// prepare new row dans le tableau			
-					
-					//if(data.users.length > 0)
-					//{
-						for(var i=0; i< data.users.length;i++)		// remove previous user array
+						if(data.users[i] != null)
 						{
-							$("#ligne" + tabId[i]).remove();
-						}
-						
-						for(var i =0; i< data.users.length;i++)
-						{
-							if(data.users[i] != null)
+							var newRows = "";	
+							newRows += "<tr id=\"ligne" + (i)  + "\"" +  "><td>" + data.users[i] + "</td><td>" + 
+									data.dateConnexion[i] + "</td><td> <button type=\"button\" class=\"decoButton\" id=\"" +i + "\">Déconnecter</button></td></tr>";
+
+							$("#myTable").append(newRows);						// ajout de la ligne
+							$('.decoButton').click(function() 					// ajout listener decoButton
 							{
-								var newRows = "";	
-								newRows += "<tr id=\"ligne" + (tabId[i])  + "\"" +  "><td>" + data.users[i] + "</td><td>" + 
-										data.dateConnexion[i] + "</td><td> <button type=\"button\" class=\"decoButton\" id=\"" + (tabId[i]) + "\">Déconnecter</button></td></tr>";
-								
-								
-								//if(!document.getElementById('ligne'+tabId[i]))
-								//{
-									$("#myTable").append(newRows);						// ajout de la ligne
-									$('.decoButton').click(function() 					// ajout listener decoButton
-										{
-											$("#ligne" + this.id).remove();
-										});
-								//}
-							}
+								$("#ligne" + this.id).remove();
+								$.post(newURL +"/decoUser", {name: data.users[this.id]} ,callbackGet);					// demande des users
+							});
 						}
-						$("#contentAdmin").height($("#contentAdmin").height()+(25*data.users.length));						
-						//$("#contentAdmin").height(tailleDivAdmin+(25*data.users.length));						
-					//}
+					}
+					$("#contentAdmin").height(heightPageAdmin+(25*data.users.length));						
 				}				
 			}
 		}
