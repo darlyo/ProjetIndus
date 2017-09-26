@@ -4,6 +4,8 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
 var net = require('net');
+const https = require('https');
+const fs = require('fs');
 
 //Mes modules
 var can = require('./can.js')
@@ -30,7 +32,6 @@ var motor = 0;
 var temp = 1;
 var pres = 0;
 var amp = 0;
-
 var id=0;
 
 //timeout Connexion user
@@ -39,8 +40,15 @@ var timeOutInvite = 240000; 		// milliseconde
 //Variables serveur
 var app = express();
 app.use(express.static('public'));		// dossier public pour client
-var server = require('http').Server(app);
+
+//création du serveur en https
+var server = .createServer({
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+}, app).listen(3300);
+
 var io = require('socket.io').listen(server);
+
 
 //active les notification d'expiration
 redis.init(false);
@@ -49,10 +57,15 @@ redis.getToken("la");
 redis.getToken("admin");
 // Communication Can
 var client = new net.Socket();
-client.connect(PORT, HOST, function() {
-	console.log('Connected');
-	client.setNoDelay();
-});
+//tentative de connection au CR3131 toute les 2min si non connecté
+var timeoutCR3131 = setTimeout(connectCR3131,120000);
+
+function connectCR3131(){
+	client.connect(PORT, HOST, function() {
+		console.log('Connected');
+		client.setNoDelay();
+	});
+}
 
 client.on('data', function(data) {
 	console.log("Reception de données");
@@ -62,15 +75,28 @@ client.on('data', function(data) {
 // action sur la communcation avec le cr3131
 client.on('close', function() {
 	console.log('Connection closed');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
 });
 client.on('connect', function() {
+	io.emit('CanOK');
 	console.log('Connection etablie');
+	clearInterval(timeoutCR3131);
+	timeoutCR3131 = null;
 });
 client.on('drain', function() {
 	console.log('Connection drain');
 });
+client.on('end', function() {
+	console.log('Fin de connection');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
+});
 client.on('error', function() {
 	console.log('Connection error');
+	io.emit('erreurCan');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
 });
 
 server.listen(3300);
@@ -83,31 +109,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));
 });
-
-/* 
-// reception d'une comande pour monter la passerelle
-app.post('/monterPasserelle', function(req, res){					// Monter passerelle
-	// upState = !upState;
-	// downState = false;
-	upState = req.body.up == "true" ? true : false ;
-	downState = req.body.down == "true" ? true : false ;
-	console.log('monter Passerelle : up='+upState+ '  ,down='+downState);
-
-	sendCMD(upState,downState);
-	res.send({success:true});
-});
-
-// reception d'une comande pour descendre la passerelle
-app.post('/descendrePasserelle', function(req, res){			// Descendre
-	// upState = false;
-	// downState = !downState;
-	upState = req.body.up == "true" ? true : false ;
-	downState = req.body.down == "true" ? true : false ;
-	console.log('descendre Passerelle : up='+upState+ '  ,down='+downState);
-
-	sendCMD(upState,downState);
-	res.send({success:true});
-}); */
 
 //demande d'authentification
 //	USER 		|		PASSWORD 
@@ -179,6 +180,7 @@ app.post('/decoUser', function(req,res){
 app.get('/users', function(req,res){
 	var users =[];
 	var conexion =[];
+
 	tabUser2.forEach(function (a){
 		users.push(a.name);
 		conexion.push(a.date);		
@@ -405,14 +407,6 @@ var traitementMsg = function(msg,id)
 
 			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
 			break;
-		}
-		case 2:	//pour les test
-		{
-			console.log('Envoie de cmd can');
-			sendCMD(false,false);
-			console.log(parseInt(msg,16));
-			amp = can.swapEndianness(msg);
-			console.log(amp);
 		}
 		default :
 		{

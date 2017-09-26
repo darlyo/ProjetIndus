@@ -15,14 +15,16 @@ function padStart(str, count) {
     return str;
 };
 
-//Chnage le format endainness
+//Change le format endainness
 // Parmametre: un entier
-// returne : une string de l'entier avec l'indian inverssé 
+// returne : un string de l'entier avec l'indian inverssé 
 function swapEndianness(v)
 {
 	var s = v.toString(16);             // translate to hexadecimal notation
 	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
 	var a = s.match(/../g);             // split number in groups of two
+	if(a == null)
+		return '00';
 	a.reverse();                        // reverse the groups
 	var s2 = a.join("");                // join the groups back together
 	return s2;
@@ -41,7 +43,7 @@ function createBinaryString (nMask, size = 32) {
 }
 // Exemple
 // console.log(createBinaryString(0x0001));  	--> 00000000000000000000000000000001
-// console.log(createBinaryString(-3));			--> 11111111111111111111111111111101
+// console.log(createBinaryString(-3));				--> 11111111111111111111111111111101
 // console.log(createBinaryString(0x7fff));		--> 00000000000000000111111111111111
 
 
@@ -69,7 +71,7 @@ function checksum(s)
 	return ''+C1.toString(16)+C2.toString(16);
 }
 	
-	
+//Xor de deux hexa
 function xor(a, b) {
 	b = parseInt(b,16);	
 	// console.log("XOR: a="+a+"  b="+b);
@@ -310,21 +312,20 @@ function buildMsg(id, tab){
 	buffer.fill(0);
 	buffer.writeUIntBE('0x'+msg.slice(0,10),0, 5);
 	buffer.writeUIntBE('0x'+msg.slice(10,msg.length),5, dlc-sizeID);
-	// buffer.writeUIntBE('0x'+msg,0, bufferSize-2);
-	// buffer.writeUIntBE('0x'+check,5+dlc, 1);
-	console.log("1#  : " +buffer.toString('hex'));
+	
 	buffer.writeUIntBE('0x'+check,bufferSize-2, 1);
-	console.log("2#  : " +buffer.toString('hex'));
-
-	// buffer.writeUIntBE(eof, 6+dlc, 1);
 	buffer.writeUIntBE(eof, bufferSize-1, 1);	
-	console.log("3#  : " +buffer.toString('hex'));
 
 	
 	return buffer;
 } 
 
-
+/*
+Récupére un message CAN, extrait les données et les renvoient dans callback
+data : message socket sur l'évenement data du CR3131
+callback : renvoie l'id et les données de message valide
+				callback(msg,id)	
+*/
 function readCan(data, callback)
 {
 	var res = data.toString('hex');
@@ -359,11 +360,14 @@ function readCan(data, callback)
 		var i = res.indexOf("43");
 	}
 }
+
  //exemple
-/* var tab = []
-tab[0] = {type: 'bool', value:true};
-tab[1] = {type: 'bool', value:false};
-tab[2] = {type: 'int', value:22};
-tab[3] = {type: 'int', value:15};
-buildMsg(7,tab); */
+// var tab = []
+// tab[0] = {type: 'bool', value:true};
+// tab[1] = {type: 'bool', value:false};
+// tab[2] = {type: 'int', value:22};
+// tab[3] = {type: 'int', value:15};
+// buildMsg(10,tab);
+
+
 

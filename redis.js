@@ -5,7 +5,8 @@ var redis = require("redis")
   , subscriber = redis.createClient()
   , subToken = redis.createClient()
 	, client = redis.createClient();
-
+	
+	
 	//export des functions du module
 module.exports = { 		
 		'setCallbackToken' : setCallbackToken,

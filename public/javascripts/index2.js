@@ -263,6 +263,18 @@
 			document.getElementById("alert-text").innerHTML  = " Session expirée";
 			socket.close();
 		});
+		
+		socket.on('erreurCan', function(message)								// if probleme de communication avec le CR3131
+		{
+			document.getElementById("alert").className = "alert alert-danger";
+			document.getElementById("alert-text").innerHTML  = " ERREUR : réseau CAN indisponible, veuillez réessayer";
+		});
+		
+		socket.on('CanOK', function(message)								// if probleme de communication avec le CR3131
+		{
+			document.getElementById("alert").className = "alert";
+			document.getElementById("alert-text").innerHTML  = " Connexion CAN établie";
+		});
 	}
 	
 	function callbackAuth(message, status){
