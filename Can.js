@@ -16,21 +16,21 @@ function padStart(str, count) {
 };
 
 //Change le format endainness
-// Parmametre: un entier
-// returne : un string de l'entier avec l'indian inverssé 
+// Parmamétre: un entier
+// retourne : un string de l'entier avec l'indian inverssé 
 function swapEndianness(v)
 {
-	var s = v.toString(16);             // translate to hexadecimal notation
-	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
-	var a = s.match(/../g);             // split number in groups of two
+	var s = v.toString(16);             // traduie en hexadecimal
+	s = s.replace(/^(.(..)*)$/, "0$1"); // Ajout de 0 devant si necessaire
+	var a = s.match(/../g);             // spérare en paire
 	if(a == null)
 		return '00';
-	a.reverse();                        // reverse the groups
-	var s2 = a.join("");                // join the groups back together
+	a.reverse();                        // inverse l'ordre des groupe
+	var s2 = a.join("");                // rassemble en une seul chaine
 	return s2;
 }
 
-//Retourne un nombre sous sa forme binaire en 32bits
+// Retourne un nombre sous sa forme binaire en 32bits
 // Parametre : un entier entre -2147483648 and 2147483647
 // Return : une string de l'entier en bianire
 function createBinaryString (nMask, size = 32) {
@@ -95,12 +95,13 @@ function xor(a, b) {
 	// console.log("XOR: "+r);
 	return r;
 }
-//-----------------Conersion Can to entier --------------------------
+
+//-----------------Conversion Can to entier --------------------------
+
 //BYTE	0				255				8 Bit
 // USINT:	0				255				8 Bit
 function canToByte(v){
 	var s1 = createBinaryString('0x'+v,8);
-	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -109,7 +110,6 @@ function canToByte(v){
 function canToWord(v){
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1,16);
-	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -118,7 +118,6 @@ function canToWord(v){
 function canToDWord(v){
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1);
-	// console.log(parseInt(s1,2));
 	return parseInt(s1,2);
 }
 
@@ -151,8 +150,6 @@ function canToInt(v)
 	var s1 = '0x'+ swapEndianness(v);
 	s1 = createBinaryString(s1,16);
 	var res = parseInt(s1,2);
-	// console.log(res);
-	// console.log('comp '+createBinaryString(s1 & 0x8000));
 	if (res >= 32768)
 		res = res - 32768*2;
 	console.log(res +'\n');
@@ -165,7 +162,6 @@ function canToInt(v)
 function byteToCan(v){
 	var res = '' + v.toString(16);
 	while (res.length < 2) res = '0' + res;
-	// console.log(res+'\n');
 	return res;
 }
 
@@ -175,7 +171,6 @@ function wordToCan(v){
 	var res = ''+v.toString(16);
 	while (res.length < 4) res = '0' + res;
 	res = swapEndianness(res);
-	// console.log(res+'\n');
 	return res;
 }
 
@@ -185,7 +180,6 @@ function dWordToCan(v){
 	var res = ''+v.toString(16);
 	while (res.length < 8) res = '0' + res;
 	res = swapEndianness(res);
-	console.log(res+'\n');
 	return res;
 }
 
@@ -196,11 +190,9 @@ function sIntToCan(v)
 		return NaN;
 
 	var v1 = v<0?-v:v;
-	// console.log(v);
 	v1 = (v <0) && (v != -128)? v1+0x80:v1;
 	res = ''+v1.toString(16);
 	while (res.length < 2) res = '0' + res;
-	// console.log(res+'\n');
 	return res;
 }
 
@@ -211,12 +203,10 @@ function dIntToCan(v)
 		return NaN;
 
 	var v1 = v<0?-v:v;
-	console.log(v);
 	v1 = (v <0) && (v != -2147483648)? v1+0x80000000:v1;
 	res = ''+v1.toString(16);
 	while (res.length < 8) res = '0' + res;
 	res = swapEndianness(res);
-	console.log(res+'\n');
 	return res;
 }
 
@@ -227,12 +217,10 @@ function intToCan(v)
 		return NaN;
 
 	var v1 = v<0?-v:v;
-	console.log(v);
 	v1 = (v <0) && (v != -32768)? v1+0x8000:v1;
 	res = ''+v1.toString(16);
 	while (res.length < 4) res = '0' + res;
 	res = swapEndianness(res);
-	console.log(res+'\n');
 	return res;
 }
 
@@ -250,7 +238,7 @@ function buildMsg(id, tab){
 	var dlc = 0;
 	var data ='';
 	//console.log('size tab ='+tab["length"]);
-	//extraction des donnée de map
+	//extraction des données de la map
 	for (var i =0; i<tab["length"];i++) {
 		// console.log(tab[i].type + " = " + tab[i].value);
 		var v;
@@ -286,9 +274,7 @@ function buildMsg(id, tab){
 				v= tab[i].value?'01':'00';
 				break;			  
 		}
-		// console.log('value :'+v);
 		data += v;
-		// console.log('size elements :' + v.length)
 		dlc += v.length/2;
 	}
 	var sizeID = 3;
@@ -299,11 +285,10 @@ function buildMsg(id, tab){
   console.log('data :'+data);
 	var eof = 0x0d; 
 	
-	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
-	// var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),sizeID*2)+data;
+	//var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),6)+data;
+	var msg = sof.toString(16)+padStart(cmd,2) + padStart(id.toString(16),sizeID*2)+data;
 	console.log('msg :'+msg);
 	var check = ''+checksum(msg);		// checksum du 
-  // console.log('check :'+check);
 
 	// compute the required buffer length
 	var bufferSize = 2 + dlc + 2;
@@ -329,7 +314,6 @@ callback : renvoie l'id et les données de message valide
 function readCan(data, callback)
 {
 	var res = data.toString('hex');
-	//console.log('Received: ' + res);
 
 	var i = res.indexOf("43");
 	var j;
@@ -339,7 +323,7 @@ function readCan(data, callback)
 		var dlc = parseInt(res.slice(i+2,i+4),16)-3;
 		//calcul de la fin du message
 		j = i+13+dlc*2;
-		//extraction d'un message sur l'ensemble des donnée reçut
+		//extraction d'un message sur l'ensemble des données reçuent
 		var dataHex = res.substr(i,j+1);
 		res = res.substr(j+1,res.length-(j+1));
 
@@ -350,13 +334,13 @@ function readCan(data, callback)
 
 		console.log('MSG Received: ' + dataHex);
 
-		//récupération des donnée du message
+		//récupération des données du message
 		var msg =  dataHex.slice(10,10+dlc*2);
 		console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
 		
 		//traitement des données en fonction de l'id
 		callback(msg,id);
-		//debut du prochain message
+		//début du prochain message
 		var i = res.indexOf("43");
 	}
 }

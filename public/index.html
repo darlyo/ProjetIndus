@@ -76,10 +76,27 @@
 	
 		<div id="contentAdmin" class="jumbotron">	
 			<h2> Administration </h2>
-			<h3> &nbsp Utilisateur connecté </h3>
-			<table id="myTable" class="col-md-6 col-xs-6">							<!--------- TAB USER ---------->
-			<!-- <h3> &nbsp Ajouter un utilisateur </h3> -->
-			</table>
+			<div class="row ">
+				<div class="col-md-6 col-xs-12 ">
+					<h3> &nbsp Utilisateur connecté </h3>
+					<table id="myTable">							<!--------- TAB USER ---------->
+					</table>
+				</div>
+				<div class="col-md-6 col-xs-12 ">
+				</div>
+				<div class="col-md-6 col-xs-12 ">
+					<h3> &nbsp Ajouter un utilisateur </h3>
+					<table><tr>
+						<td><label for="new_usr">Name:</label></td>
+						<td><input type="text" class="form-control" id="new_usr"></td>
+					</tr><tr>
+						<td><label for="new_pwd">Password:</label></td>
+						<td><input type="password" class="form-control" id="new_pwd"></td>
+					</tr><tr>
+					<td/><td><button type="button" class="btn btn-default" id="add_user">Ajouter</button></td>
+					</table>					
+				</div>
+			</div>
 		</div>
 		
 		<div id="contentHome" class="jumbotron">

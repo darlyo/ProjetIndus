@@ -1,13 +1,11 @@
 // port redis 6379
-var util = require('util');
 var crypto = require('crypto');
 var redis = require("redis")
-  , subscriber = redis.createClient()
   , subToken = redis.createClient()
 	, client = redis.createClient();
 	
 	
-	//export des functions du module
+	//export des fonctions du module
 module.exports = { 		
 		'setCallbackToken' : setCallbackToken,
     'init' : init,
@@ -34,28 +32,28 @@ function init(clear = false)
 	if (clear)	//vide la BD
 		client.flushall();
 
-	//active les notifiaction d'expiration
+	//active les notification d'expiration
 	client.config("set", "notify-keyspace-events", "KEx");
 	//subscribe expiration token
 	subToken.psubscribe("__keyspace@0__:token:*");
 }
 
-//creation d'un nouveau utilisateur
+// création d'un nouveau utilisateur
 // droit  1= admin 		2= user
-function createUser(name, pwd, droit = 2, callback)
+function createUser(name, pwd, droit = 2, callback, socket=null)
 {
 	client.exists("user:"+name, function(err, existe){
 		console.log("client "+name+" existe: "+existe);
-		//si l'ulitilisateur nexiste pas on le crée
+		//si l'ulitilisateur n'existe pas on le crée
 
 		if (existe == "0" ){
 			client.hmset("user:"+name, "pwd", pwd, "droit", droit);
 			console.log("Utilisateur "+name+" créé");
-			if(callback != null) callback(true);
+			if(callback != null) callback(true, socket);
 		}
 		else{
 			console.log("Utilisateur "+name+" existe déjà, creation annulé");
-			if(callback != null) callback(false);
+			if(callback != null) callback(false, socket);
 		}
 	});
 }
@@ -144,8 +142,8 @@ function getDroit(name, callback)
 	});
 }
 
-//creation d'un token pour identifié un ulitilisateur connecté et
-// vérifié la durée de vie de la connection
+//creation d'un token pour identifier un ulitilisateur connecté et
+// vérifié la durée de vie de la connexion
 // default: session de 5min
 function setToken(name, callback, socket, time=300, size = 20)
 {
@@ -189,19 +187,22 @@ function getToken(user, callback)
 	});
 }
 
-function checkToken(user, token, callback, socket =null)
+function checkToken(user, token, callback, parametre=null)
 {
 	client.get("token:"+user, function (err, replie) {
 		console.log("get token:"+user+"  :"+replie + " = " +token);
 		if ((replie == token) && (token != null))
-			if (socket != null) callback(socket);
+		{
+			console.log("checkToken , parametre = "+ parametre);
+			if (parametre != null) callback(parametre);
 			else callback();
+		}
 		else
-			callbackToken(user);	//deconnection de l'user
+			callbackToken(user);	//deconnection de l'utilisateur
 	});
 }
 
-//Demande de fermeture d'une connection
+//Demande de fermeture d'une connexion
 function closeToken(user, callbackT = callbackToken)
 {
 	console.log("Token user: " + user +" close");
@@ -221,7 +222,7 @@ function closeToken(user, callbackT = callbackToken)
 
 //sur reception d'un événement:
 // expiration de la durée de vie d'un token
-// on enléve l'utilisateur associé de la liste des utilisateur connecté
+// on enléve l'utilisateur associé de la liste des utilisateurs connectés
 subToken.on("pmessage", function(channel, message) {
 	var user = message.slice(21);
 	console.log("Token user: " + user +" expired");

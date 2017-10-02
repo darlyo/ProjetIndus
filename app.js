@@ -11,7 +11,7 @@ const fs = require('fs');
 var can = require('./can.js')
 var redis = require('./redis.js')
 
-//Lance le serveur en daemon (linux uniqument)
+//Lance le serveur en daemon (linux uniquement)
 /*
 require('daemon')();
 console.log(process.pid);					// nouveau pid du serveur NODE.JS
@@ -21,7 +21,11 @@ console.log(process.pid);					// nouveau pid du serveur NODE.JS
 var HOST = '192.168.173.246';
 var PORT = 30000;
 
-// Variables de connection
+var privateKey = fs.readFileSync('key.pem');
+var certificate = fs.readFileSync('cert.pem');
+var credentials = {key: privateKey, cert: certificate};
+
+// Variables de connexion
 var socketAdmin;
 var tabUser2 = [];
 
@@ -42,15 +46,16 @@ var app = express();
 app.use(express.static('public'));		// dossier public pour client
 
 //création du serveur en https
-var server = .createServer({
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-}, app).listen(3300);
-
+var server = https.createServer(credentials, app);
+// var server = https.createServer({
+  // key: fs.readFileSync('key.pem'),
+  // cert: fs.readFileSync('cert.pem')
+// }, app).listen(3300);
+server.listen(3300);
 var io = require('socket.io').listen(server);
 
 
-//active les notification d'expiration
+//active les notifications d'expiration
 redis.init(false);
 redis.setCallbackToken(timeoutConnexion);
 redis.getToken("la");
@@ -72,7 +77,7 @@ client.on('data', function(data) {
 	can.readCan(data,traitementMsg);
 });
 
-// action sur la communcation avec le cr3131
+// action sur la communication avec le cr3131
 client.on('close', function() {
 	console.log('Connection closed');
 	if(timeoutCR3131 == null)
@@ -99,22 +104,17 @@ client.on('error', function() {
 		timeoutCR3131 = setTimeout(connectCR3131,20000);
 });
 
-server.listen(3300);
 
 app.use(bodyParser.json());								// communication json
 app.use(bodyParser.urlencoded({ extended: false }));
 
-//----------------------Contruction des routes -------------------------------------------
+//----------------------Construction des routes -------------------------------------------
 //Page d'accueil
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));
 });
 
 //demande d'authentification
-//	USER 		|		PASSWORD 
-// 	admin				admin
-//	jeanJacque			jeanJacque
-//	Benoit				Benoit
 app.post('/authentification', function(req,res){				// Auth admin et utilisateurs tenderlift
 	
 	var usrName = req.body.name;
@@ -142,12 +142,11 @@ var callbackAuth = function(statut, res, droit, token, name)
 }
 
 //demande d'authentification entant qu'invité
-app.post('/invite', function(req, res){				// invite requete
+app.post('/invite', function(req, res){				// requete invite 
 	console.log("demande de connection invitée");
 	if(socketAdmin != null)
 	{
 		res.send({ success: true });
-		
 		// on demande a l'admin si on l'accepte
 		socketAdmin.emit('newInvite');			
 	}
@@ -271,45 +270,72 @@ io.on('connection', function (socket) {
 	//Operation sur recetion de message socket
 	socket.on('cmd_up', function (msg) {
 		console.log("cmd up passerelle");
-		redis.checkToken(msg.name, msg.token, TDL_UP);
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_UP, data);
 		//TDL_UP();
 	});
 	
 	socket.on('cmd_down', function (msg) {
 		console.log("cmd down passerelle");
-		redis.checkToken(msg.name, msg.token, TDL_DOWN);
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_DOWN, data);
 		//TDL_DOWN();
 	});
 	
 	socket.on('cmd_stop', function (msg) {
 		console.log("cmd stop passerelle");
-		redis.checkToken(msg.name, msg.token, TDL_STOP);
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_STOP, data);
 		//TDL_STOP();
 	});
 	
 	socket.on('isAdmin', function (msg) {
 		console.log("définit le nouveau admin en charge");
-		redis.checkToken(msg.name, msg.token, setAdmin, socket);
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, setAdmin, data);
+	});
+	
+	socket.on('add_user', function (msg) {
+		console.log("Ajout d'un utilisateur");
+		var data = {'socket':socket, 'new_user':msg.new_user, 'new_pwd':msg.new_pwd }; 
+		redis.checkToken(msg.name, msg.token, addUser, data);
 	});
 
 });
 
-function setAdmin(socket)
+function setAdmin(parametre)
 {
 	console.log("new admin set");
+	if (parametre.socket == null)
+		return;
 	if(socketAdmin != null)
-			socketAdmin = socket;		//save admin socket
+			socketAdmin = parametre.socket;		//save admin socket
 
 	//enregistrement de l'utilisateur en tant qu'admin
 	else
 	{
-		socketAdmin = socket;
+		socketAdmin = parametre.socket;
 		socketAdmin.on('disconnect', function () 
 		{
 			console.log("disconnect admin");
 			socketAdmin = null;
 		});
 	}
+}
+
+function addUser(parametre)
+{
+	redis.createUser(parametre.new_user , parametre.new_pwd, droit = 2, confirmeAddUser, parametre.socket)
+}
+
+function confirmeAddUser(OK, socket)
+{
+	if (socket == null)
+		return;
+	else if (OK)
+		socket.emit('add_user_OK', {'ok':1});		
+	else
+		socket.emit('add_user_OK', {'ok':0});		
 }
 
 function valideInvite(statut, socket, token, user)

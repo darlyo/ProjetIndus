@@ -6,6 +6,20 @@ body {
 a {
   color: #00B7FF;
 }
+
+h2 {
+	text-align: center;
+}
+
+#myTable{
+	text-align: center;
+	width: 80%;
+}
+tr .td1 {
+	text-align: left;
+	width: 20%;
+}
+
 /*
 div[class="row"] {
     border: 1px dotted rgba(0, 0, 0, 0.5);
