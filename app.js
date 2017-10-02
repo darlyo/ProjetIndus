@@ -356,18 +356,23 @@ function valideInvite(statut, socket, token, user)
 }
 
 // tempo user function
-function timeoutConnexion(user) 
+function timeoutConnexion(user, parametre) 
 {
-	var id = tabUser2.findIndex(function(a){return a.name === user});
-	if(id != -1){
-		console.log("user: "+user+" deco");
-		if(tabUser2[id].socket != null){
-			tabUser2[id].socket.emit('timeoutConnexion', {timeout:true});
+	if (parametre.action == 1)
+	{
+		var id = tabUser2.findIndex(function(a){return a.name === user});
+		if(id != -1){
+			console.log("user: "+user+" deco");
+			if(tabUser2[id].socket != null){
+				tabUser2[id].socket.emit('timeoutConnexion', {timeout:true});
+			}
+			tabUser2.splice(id,1);		//on suprime l'élément du tableau
 		}
-		tabUser2.splice(id,1);		//on suprime l'élément du tableau
+		else
+			console.log("user: "+user+" non enregristré");
 	}
 	else
-		console.log("user: "+user+" non enregristré");
+		parametre.socket.emit('timeoutConnexion', {timeout:true});
 	
 }
 

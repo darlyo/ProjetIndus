@@ -191,14 +191,17 @@ function checkToken(user, token, callback, parametre=null)
 {
 	client.get("token:"+user, function (err, replie) {
 		console.log("get token:"+user+"  :"+replie + " = " +token);
-		if ((replie == token) && (token != null))
+		if (replie == null)
+			parametre.action = 1;		//utilisateur n'est plus valide
+		if ((replie == token) && (token != null))	
 		{
+			parametre.action = 2;		//utilisateur valide mais mauvais token
 			console.log("checkToken , parametre = "+ parametre);
 			if (parametre != null) callback(parametre);
 			else callback();
 		}
 		else
-			callbackToken(user);	//deconnection de l'utilisateur
+			callbackToken(user, parametre);	//deconnection de l'utilisateur
 	});
 }
 
@@ -217,7 +220,7 @@ function closeToken(user, callbackT = callbackToken)
 	});
 	
 	//fermeture socket avec l'user
-	callbackT(user);
+	callbackT(user,{'action':1});
 }
 
 //sur reception d'un événement:
@@ -236,7 +239,7 @@ subToken.on("pmessage", function(channel, message) {
 	});
 		
 	//fermeture socket avec l'user
-	callbackToken(user);
+	callbackToken(user, {'action':1});
 });
 
 client.on("error", function (err) {
