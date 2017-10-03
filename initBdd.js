@@ -1,7 +1,3 @@
-/* var redis = require("redis")
-  , subscriber = redis.createClient()
-  , subToken = redis.createClient()
-	, client = redis.createClient(); */
 var redis = require('./redis.js')
 
 
