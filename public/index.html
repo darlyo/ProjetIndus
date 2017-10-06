@@ -11,10 +11,9 @@
 	<link href="stylesheets/style.css" rel="stylesheet"> 
 	<link href="stylesheets/navbar-fixed-top.css" rel="stylesheet">
 
-		
 	<script src="javascripts/jquery-3.1.1.js"></script>
 	
-    <link href="stylesheets/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap -->
+  <link href="stylesheets/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap -->
 	<script src="javascripts/bootstrap.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -25,7 +24,7 @@
     <![endif]-->
   </head>
   
-  <body >
+  <body>
   
     <!-- Fixed navbar -->
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -42,10 +41,10 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#"> 
+            <li id="home" ><a > 
 								<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
 								Home</a></li>
-            <li><a id="adminOnglet" href="#"> 
+            <li id="admin" ><a href="#"> 
 								<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
 								Admin</a></li>
             <li><a href="#contact"> 
@@ -56,7 +55,7 @@
 						<button id="inviteButton" value = "Invite" type="button" class="btn btn-primary"> 
 								<span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
 								Invité </button>
-						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary">Déconnection </button>						
+						<button id="disconnectButton" disabled="disabled"  type="button" class="btn btn-primary">Déconnexion </button>						
 						<button id="authButton" value = "Authentification" type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalAuth"> 
 								<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
 								Connexion </button>
@@ -73,59 +72,71 @@
 		</div>
 	</div>
 		
-	<div class="container">
-		<div class="jumbotron">
-	  
-	  <h2> Controles 1 </h2>
-	  <div class="row ">
-			<center>
-			<div class="col-md-4 col-xs-4 ">
-				<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
-					<!-- <img src="images/haut.png"  width="40" oncontextmenu="return false;"/>  -->
-					<div class="flecheHaut"></div>
-					</button> </br></br>
-				<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
-					<!-- <img src="images/bas.png" width="40" oncontextmenu="return false;"/> -->
-					<div class="flecheBas"></div>
-				</button> 
+	<div class="container" >
+	
+		<div id="contentAdmin" class="jumbotron">	
+			<h2> Administration </h2>
+			<div class="row ">
+				<div class="col-md-6 col-xs-12 ">
+					<h3> &nbsp Utilisateur connecté </h3>
+					<table id="myTable">							<!--------- TAB USER ---------->
+					</table>
+				</div>
+				<div class="col-md-6 col-xs-12 ">
+				</div>
+				<div class="col-md-6 col-xs-12 ">
+					<h3> &nbsp Ajouter un utilisateur </h3>
+					<table><tr>
+						<td><label for="new_usr">Name:</label></td>
+						<td><input type="text" class="form-control" id="new_usr"></td>
+					</tr><tr>
+						<td><label for="new_pwd">Password:</label></td>
+						<td><input type="password" class="form-control" id="new_pwd"></td>
+					</tr><tr>
+					<td/><td><button type="button" class="btn btn-default" id="add_user">Ajouter</button></td>
+					</table>					
+				</div>
 			</div>
-			<div class="col-md-8 col-xs-8">
-				<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
-			</div>
-			</center>
-	  </div>
-	  
-	  <h2> Controles 2 </h2>
-	  <div class="row">
-			<center>
-				<div class="col-md-2 col-xs-6"> Moteur
-					<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
-				</div> 
-				<div class="col-md-2 col-xs-6">Temperature
-					<img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" > 
+		</div>
+		
+		<div id="contentHome" class="jumbotron">
+		  <h2> Plateforme Tenderlift </h2>
+		  <div class="row ">
+				<center>
+				<div class="col-md-4 col-xs-4 ">
+					<button type="button" class="btn btn-primary" id="flecheHaut" disabled="disabled"> 
+						<div class="flecheHaut"></div>
+						</button> </br></br>
+					<button type="button" class="btn btn-primary" id="flecheBas" disabled="disabled">
+						<div class="flecheBas"></div>
+					</button> 
 				</div>
-				<div class="col-md-2 col-xs-6">
-					<label> Pression en bar : </label>
-					<label id="pression"> 0.0 </label>
+				<div class="col-md-8 col-xs-8">
+					<img src="images/TDL-5.png" class="img-responsive" id="tdl" width="450" height="300"  > 
 				</div>
-				<div class="col-md-2 col-xs-6" id="controle">
-				</div>
-				<div class="col-md-2 col-xs-6">
-					<p>MAX :1000</p>					
-					<div id="Cont-translate"> 
-						<div id="translate"> valeur </div>
+				</center>
+		  </div>
+		  
+		  <h2> Données Capteurs </h2>
+		  <div class="row">
+				<center>
+					<div class="col-md-2 col-xs-6"> Moteur
+						<img src="images/ledVerte.png" class="img-responsive" id="ledMoteur" width="40" height="20"  > 
+					</div> 
+					<!-- <div class="col-md-2 col-xs-6">Temperature -->
+						<!-- <img src="images/ledRouge.png" class="img-responsive" id="ledTemperature" width="40" height="20" >  -->
+					<!-- </div> -->
+					<div class="col-md-2 col-xs-6" id="controle">
 					</div>
-					<p>MIN :0</p>
-				</div>
-				<div class="col-md-2 col-xs-6" >
-					<img src="images/gauge.png" class="img-responsive" id="gauge"> 
-					<div id="rotate"></div>
-					<p>0°</p>
-				</div>
-			</center>
-	  </div>
-	  </div>
-
+					<div class="col-md-2 col-xs-6" >
+						<div id="g1" class="gauge"></div>
+					</div>
+					<div class="col-md-2 col-xs-6" >
+						<div id="g2" class="gauge"></div>
+					</div>
+				</center>
+		  </div>
+		</div>
 	</div>
 	
 	<div class="container" id="contact" >
@@ -136,7 +147,7 @@
 		<div class="row">
 			<div class="col-md-6 col-xs-12">
 				<address>
-					<strong>Tenderlift, Inc.</strong><br>
+					<strong>Tenderlift, SAS</strong><br>
 					Quai Santa Maria, <br>
 					66140 Canet-en-Roussillon<br>
 					<abbr title="Phone">P:</abbr> +33 (0)4 68 73 59 12<br>
@@ -149,7 +160,6 @@
 					<strong>Contact</strong><br>
 					<span class="glyphicon glyphicon-envelope"></span><a href="mailto:#">  tenderlift@tenderlift.net</a><br>
 					<a href="http://www.tenderlift.net">  Site Web</a>
-				 
 				</address>
 			</div>
 		</div>
@@ -157,388 +167,49 @@
 	</div>
 	</div>
 
-	    
-			
-	<!---------- Modal ----------------->
-	<div class="modal fade" tabindex="-1" role="dialog" id="modalAuth">
-					<div class="modal-dialog" role="document">
-						<div class="modal-content">
-							<div class="modal-header">
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-								<h4 class="modal-title">Authentification </h4>
-							</div>
-							<div class="modal-body">			<!-- modal Body -->
-								<label id="messageInfo"> </label>
-								<label for="usr">Name:</label>
-								<input type="text" class="form-control" id="usr">
-								<label for="pwd">Password:</label>
-								<input type="password" class="form-control" id="pwd">
-							</div>		<!-- modal Body -->
-							<div class="modal-footer">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-								<button type="button" class="btn btn-primary" id="sendButon">Send</button>
-							</div>
-						</div>		<!-- /.modal-content -->
-					</div>		<!-- /.modal-dialog -->
-				</div>			<!-- /.modal -->	   
+		<!---------------------------------------- MODAL CONNEXION ------------------------------------>
+		<div class="modal fade" tabindex="-1" role="dialog" id="modalAuth">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Authentification </h4>
+					</div>
+					<div class="modal-body">			<!-- modal Body -->
+						<label id="messageInfo"> </label>
+						<label for="usr">Name:</label>
+						<input type="text" class="form-control" id="usr">
+						<label for="pwd">Password:</label>
+						<input type="password" class="form-control" id="pwd">
+					</div>		<!-- modal Body -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" id="sendButon">Send</button>
+					</div>
+				</div>		<!-- /.modal-content -->
+			</div>		<!-- /.modal-dialog -->
+		</div>			<!-- /.modal -->
+		<!---------------------------------------- MODAL ACCEPT INVITE ---------------------------------->
+		<div class="modal fade" tabindex="-1" role="dialog" id="modalAccept">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Accepter Invité </h4>
+					</div>
+					<div class="modal-body">			<!-- modal Body -->
+						<label for="usr">Accepter l'invité ? </label>
+					</div>		<!-- modal Body -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal" id="declineButton">Non</button>
+						<button type="button" class="btn btn-primary" id="acceptButton">Oui</button>
+					</div>
+				</div>		<!-- /.modal-content -->
+			</div>		<!-- /.modal-dialog -->
+		</div>
 	</body>
-
-	<script>
-	var socket;
-	var socketAdmin;
-	var isPc = false;
-	var isPortable = false;
-	var controleButtonPressed = false;
-
-	var newURL = window.location.protocol + "//" + window.location.host;
-
-	var etatTDL = "droit";
-	var h = $('#gauge').height()/2+2;
-	var deg = 0;  /*  -45 to 225*/
-	document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)"); 
-
-//------------------------------------------------------------------------------------------------------------------------------- Check media
-    
-	if (window.Touch) {					
-        isPc = false;									// si portable on cree un bouton de sécurité 'homme mort'
-		isPortable = true;
-		$('#controle').append("<button type=\"button\" class=\"btn btn-primary\" id=\"controleButton\">Contrôle</button>");	
-		
-		controlMouvement = document.getElementById('controleButton');
-		
-		controlMouvement.addEventListener('touchstart', function(e){				// listener pour activer la sécurité homme mort
-				controleButtonPressed =true;
-			})
-			
-		controlMouvement.addEventListener('touchend', function(e){
-				controleButtonPressed =false;
-				$('#flecheHaut').attr('class','btn btn-primary');								<!-- Changer couleur bouton on peut aussi avec le css ou attr de la balise -->
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 			<!-- post json puis callbackPost -->
-				$('#flecheBas').attr('class','btn btn-primary');		
-				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 
-			})
-			
-		controlMouvement.addEventListener('touchleave', function(e){
-				controleButtonPressed =false;
-				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);
-				$('#flecheBas').attr('class','btn btn-primary');		
-				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
-			})
-			
-		controlMouvement.addEventListener('touchcancel', function(e){
-				controleButtonPressed =false;
-				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); 
-				$('#flecheBas').attr('class','btn btn-primary');
-				//$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);
-			})
-	}
-	else
-	{											// Si c'est un pc on met une checkbox pour la securite homme mort
-		isPc = true;
-		isPortable = false;
-		$('#controle').append("<label><input type=\"checkbox\" value=\"\" id=\"controleCheck\" >Contrôle</label>");
-	}
 	
-//------------------------------------------------------------------------------------------------------------------------------------ Fonction diverses utiles
-	document.getElementById('flecheHaut').oncontextmenu = false;			// desactive menu contextuel lors d'appui long
-	document.getElementById('flecheBas').oncontextmenu = false;
-	
-	function degriserBoutons() 
-	{
-		document.getElementById('flecheHaut').disabled = '';
-		document.getElementById('flecheBas').disabled = '';
-		document.getElementById('disconnectButton').disabled = '';
-		document.getElementById('authButton').disabled = 'disabled';
-		document.getElementById('inviteButton').disabled = 'disabled';
-		
-		return 0;
-	}
-	
-	function callbackPost(data, status)						// callbackPost commun après chaque post
-	{
-		console.log(status);
-		console.log(data.success);
-		if(status == "success")
-		{
-			if(data.success)
-			{
-				console.log("success post Haut");
-			}
-			else
-			{
-				console.log("fail post Haut");
-			}
-		}
-	}
-	
-	function connexionDataSocket(socket) 			<!------ Fonction de com par socket -------------------------------->
-	{
-		
-		socket.on('message', function(message) {							<!-- Msg connexion -->
-			//alert('Le serveur a un message pour vous : ' + message.content);
-			console.log(message.content);
-		})
-					
-		socket.on('update pression', function(message) {				<!-- Update pression via socket -->
-			//alert('pression : ' + message.pression);
-			console.log(message.pression);
-			$("#pression").html(message.pression);
-			deg = message.pression > 1000 ? 225 : (message.pression / 1000 * 270 -45);
-			document.getElementById("rotate").style.transform = "".concat("translateY(-",h,"px) rotate(",deg,"deg)");
-			
-			var hTranslate = message.pression > 1000 ? -20 : 350 - message.pression /1000 * 370;
-			document.getElementById("translate").style.transform = "".concat("translateY(",hTranslate,"%)"); 
-
-		})
-					
-		socket.on('moteur', function(message) {				<!-- Update moteur via socket -->
-			//alert('moteur : ' + message.moteur);
-			console.log(message.moteur);
-			if(message.moteur == "on")
-			{
-				$('#ledMoteur').attr('src','images/ledVerte.png');					// changer attr d'une balise ici src pour changer image
-			}
-			else if(message.moteur == "off")
-			{
-				$('#ledMoteur').attr('src','images/ledRouge.png');
-			}
-		})
-					
-		socket.on('temperature', function(message) {				<!-- Update temperature -->
-			//alert('temperature : ' + message.temperature);		  
-			console.log(message.temperature);
-			if(message.temperature == "ok")
-			{
-				$('#ledTemperature').attr('src','images/ledVerte.png');
-			}
-			else if(message.temperature == "nok")
-			{
-				$('#ledTemperature').attr('src','images/ledRouge.png');
-			}
-		})
-		
-		socket.on('tenderlift', function(message) {				<!-- Update position tenderlift via socket -->
-			//alert('temperature : ' + message.temperature);
-			if (message.position != etatTDL )
-			{
-				etatTDL = message.position;
-				if(message.position == "montee")
-				{
-					$('#tdl').attr('src','images/monte.gif');
-				}
-				else if(message.position == "descente")
-				{
-					$('#tdl').attr('src','images/descente.gif');
-				}
-				else if(message.position == "droit")
-				{
-					$('#tdl').attr('src','images/TDL-5.png');
-				}
-			}
-			
-		})
-		
-		return 0;
-	}
-
-//------------------------------------------------------------------------------------------------------------------------------------------ Fleche Haut
-	flecheH = document.getElementById('flecheHaut');
-	
-	if (window.Touch)   													 // SI on est sur mobile 
-	{ 
-		flecheH.addEventListener('touchstart', function(e)					<!-- on verifie la securite avec button homme mort puis MONTER PASSERELLE -->
-		{
-			if(controleButtonPressed)								// SI homme mort on monte la passerelle
-			{
-				$('#flecheHaut').attr('class','btn btn-secondary');		<!-- Changer couleur bouton (gitan) on peut aussi avec css ou attr -->
-				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost); <!-- post json puis callbackPost -->
-			}
-		});
-		  
-		flecheH.addEventListener('touchend', function(e)			// Si on arrete de monter
-		{
-			if(controleButtonPressed)
-			{
-				$('#flecheHaut').attr('class','btn btn-primary');		
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost);		// arrêt montée
-			}
-	    });
-	}	
-	else														// Si on est sur pc 
-	{
-		$('#flecheHaut').on('mousedown', function() 		
-		{
-			if($('#controleCheck').is(':checked'))					// on verifie la securite avec checkbox puis POST : Monter Passerelle Click
-			{
-				$('#flecheHaut').attr('class','btn btn-secondary');							// Changer couleur bouton
-				$.post(newURL+"/monterPasserelle", {up:true,down:false} ,callbackPost);
-			}
-		}).on('mouseup', function()											 <!-- POST : Monter Passerelle release -->
-		{
-			if($('#controleCheck').is(':checked'))
-			{
-				$('#flecheHaut').attr('class','btn btn-primary');		<!-- Changer couleur bouton -->
-				$.post(newURL+"/monterPasserelle", {up:false,down:false} ,callbackPost); <!-- post json puis callbackPost -->
-			}
-		});
-	}
-//--------------------------------------------------------------------------------------------------------------------------------------- Fleche bas
-	flecheB = document.getElementById('flecheBas');
-	
-	if (window.Touch) 											// on est sur mobile
-	{ 
-		flecheB.addEventListener('touchstart', function(e)					// Descendre PASSERELLE 
-		{
-			if(controleButtonPressed)									// Si securite on descend
-			{
-				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
-				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);
-			}
-		});
-		  
-		flecheB.addEventListener('touchend', function(e)				// Descendre Passerelle Release
-		{
-			if(controleButtonPressed)
-			{
-				$('#flecheBas').attr('class','btn btn-primary');		
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost); 		// on envoi arrêt
-			}
-	    });
-	}
-	else												// PC
-	{			
-		$('#flecheBas').on('mousedown', function() 		// POST : Descendre Passerelle
-		{
-			if($('#controleCheck').is(':checked'))			// si secutite checkbox activee
-			{
-				$('#flecheBas').attr('class','btn btn-secondary');		// Changer couleur bouton
-				$.post(newURL+"/descendrePasserelle", {up:false,down:true} ,callbackPost);				// on post
-			}
-		}).on('mouseup', function() 						// POST : Descendre Passerelle release
-		{
-			if($('#controleCheck').is(':checked'))
-			{
-				$('#flecheBas').attr('class','btn btn-primary');
-				$.post(newURL+"/descendrePasserelle", {up:false,down:false} ,callbackPost);				// Arrêt
-			}
-		});
-	}
-
-	
-		
-//---------------------------------------------------------------------------------------------------------------------------------------  Auth button modal
-	$('#sendButon').on('click', function()			// POST : Auth admin ou utilisateur
-	{											// Send button modal Auth
-		var userName = $('#usr').val();
-		var userPwd = $('#pwd').val();
-		
-		$.post(newURL+"/authentification", {name:userName,pwd:userPwd} ,callbackPostSend); <!-- post json -->
-		
-		function callbackPostSend(data, status)
-		{
-			console.log(status);
-			console.log(data.success);
-			if(status == "success")				// Si requete ok 
-			{
-				if(data.success)				// Si donnees auth ok 
-				{	
-					if(userName == "admin")		// Si on se connecte en admin on ouvre la popup admin
-					{
-						socket = io.connect(newURL, { query: "admin=true" });				// Connexion Socket admin
-						console.log("success sendButton");
-						
-						degriserBoutons();	
-						window.open('admin.html','height=500 width=500,top=5,left=t,resible=no');		// pop-up admin 
-						
-						connexionDataSocket(socket);			// Connexion pour recevoir les données 
-						
-						document.getElementById("alert").className = "alert alert-success";
-						document.getElementById("alert-text").innerHTML  = " Bienvenu Admin";
-						$("#modalAuth").modal('hide');		// ferme modal 
-					}
-					else				
-					{
-						socket = io.connect(newURL, { query: "admin=except" });				// Connexion Socket utilisateur tenderlift
-						console.log("success sendButton for users");
-						
-						degriserBoutons();	
-						
-						connexionDataSocket(socket);			// Connexion pour recevoir les données 
-						
-						document.getElementById("alert").className = "alert alert-success";
-						document.getElementById("alert-text").innerHTML  = " Bienvenu - Session Active 180 secondes";
-						$("#modalAuth").modal('hide');		// ferme modal
-					}
-				}
-				else
-				{
-				
-					document.getElementById("alert-text").innerHTML  = " Echec connexion";
-					console.log("fail sendButton");
-					$("#messageInfo").html("Erreur Authentification");
-				}
-			}
-			
-		}
-	});
-	
-	$('#disconnectButton').on('click', function() <!--- Deconnexion -->
-	{
-		document.getElementById('flecheHaut').disabled = 'disabled';
-		document.getElementById('flecheBas').disabled = 'disabled';
-		document.getElementById('disconnectButton').disabled = 'disabled';
-		document.getElementById('authButton').disabled = '';
-		document.getElementById('inviteButton').disabled = '';
-		socket.close();
-		document.getElementById("alert-text").innerHTML  = " Session fermée";
-	});
-	
-	
-	//---------------------------------------------------------------------------------------------------------------------- Invites	
-	$('#inviteButton').on('click', function()		// INVITE Button
-	{						
-		$.post(newURL+"/invite", {demande:true} ,callbackPostSend); // post json 
-		function callbackPostSend(data, status)
-		{
-			console.log(status);
-			console.log(data.success);
-			if(status == "success")			// si requete ok
-			{
-				if(data.success)			// si data ok 
-				{	
-					socket = io.connect(newURL, { query: "admin=false" });			// Connexion Socket 
-					console.log("ok socket user invite");
-					
-					socket.on('inviteOk', function(message){					// Si l'admin est ok pour l'invite
-					
-						console.log("success inviteButton");
-						
-						degriserBoutons();
-					
-						connexionDataSocket(socket);		// Connexion pour recevoir les données 
-					})
-					
-					socket.on('timeoutConnexion', function(message)								// if timeout Connexion
-					{		
-						alert("Deconnexion");
-						document.getElementById('flecheHaut').disabled = 'disabled';
-						document.getElementById('flecheBas').disabled = 'disabled';
-						document.getElementById('disconnectButton').disabled = 'disabled';
-						document.getElementById('authButton').disabled = '';
-						document.getElementById('inviteButton').disabled = '';
-						document.getElementById("alert-text").innerHTML  = " Session expirée";
-						socket.close();
-					})
-				}
-				else
-				{
-					console.log("fail invite");
-				}
-			}
-		}
-	}); 	
-
-	</script>
+	<script src="javascripts/raphael-2.1.4.min.js"></script>
+  <script src="javascripts/justgage.js"></script>
+	<script src="javascripts/index2.js"></script>
 </html>

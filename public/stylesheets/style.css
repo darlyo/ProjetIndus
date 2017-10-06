@@ -1,11 +1,25 @@
 body {
-  padding: 50px;
+  /* padding: 50px; */
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
 }
+
+h2 {
+	text-align: center;
+}
+
+#myTable{
+	text-align: center;
+	width: 80%;
+}
+tr .td1 {
+	text-align: left;
+	width: 20%;
+}
+
 /*
 div[class="row"] {
     border: 1px dotted rgba(0, 0, 0, 0.5);
@@ -16,7 +30,6 @@ div[class^="col-"] {
   border: 1px dotted rgba(0, 0, 0, 0.5);
 	padding : 5px;
 
-}
 */
 
 /* Classe */
@@ -72,4 +85,13 @@ img {
 
 #Cont-translate {
 	height: 100px;
+}
+
+.gauge {
+	display: block;
+	float: left;
+}
+
+#g1 {
+	width: 100%;
 }

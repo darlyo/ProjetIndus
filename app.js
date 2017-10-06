@@ -1,23 +1,33 @@
+//import
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var bodyParser = require('body-parser');
 var net = require('net');
+const https = require('https');
+const fs = require('fs');
+
+//Mes modules
+var can = require('./can.js')
+var redis = require('./redis.js')
+
+//Lance le serveur en daemon (linux uniquement)
+/*
+require('daemon')();
+console.log(process.pid);					// nouveau pid du serveur NODE.JS
+*/
 
 // Variables reseau Can
-
 var HOST = '192.168.173.246';
 var PORT = 30000;
 
-// Variables de connection
-var authentified = false;
-var numberOfConnexion = 0;
-var numberOfAdmin = 0;
+var privateKey = fs.readFileSync('key.pem');
+var certificate = fs.readFileSync('cert.pem');
+var credentials = {key: privateKey, cert: certificate};
+
+// Variables de connexion
 var socketAdmin;
-var socketU;
-var tabUser = [];
-var tabConnexion = [];
-var tabSocket = [];
+var tabUser2 = [];
 
 //Variables global
 var upState = false;
@@ -25,6 +35,8 @@ var downState = false;
 var motor = 0;
 var temp = 1;
 var pres = 0;
+var amp = 0;
+var id=0;
 
 //timeout Connexion user
 var timeOutInvite = 240000; 		// milliseconde
@@ -32,252 +44,157 @@ var timeOutInvite = 240000; 		// milliseconde
 //Variables serveur
 var app = express();
 app.use(express.static('public'));		// dossier public pour client
-var server = require('http').Server(app);
+
+//création du serveur en https
+var server = https.createServer(credentials, app);
+// var server = https.createServer({
+  // key: fs.readFileSync('key.pem'),
+  // cert: fs.readFileSync('cert.pem')
+// }, app).listen(3300);
+server.listen(3300);
 var io = require('socket.io').listen(server);
 
-var mysql = require('mysql');		// MySQL
 
-
+//active les notifications d'expiration
+redis.init(false);
+redis.setCallbackToken(timeoutConnexion);
+redis.getToken("la");
+redis.getToken("admin");
 // Communication Can
 var client = new net.Socket();
-client.connect(PORT, HOST, function() {
-	console.log('Connected');
-	client.setNoDelay();
-});
+//tentative de connection au CR3131 toute les 2min si non connecté
+var timeoutCR3131 = setTimeout(connectCR3131,120000);
+
+function connectCR3131(){
+	client.connect(PORT, HOST, function() {
+		console.log('Connected');
+		client.setNoDelay();
+	});
+}
 
 client.on('data', function(data) {
-	var res = data.toString('hex');
-	var i = res.indexOf("4307");
-	var dataHex = res.substr(i,22);
-	//console.log('Received: ' + dataHex);
-	while( res.length >= 22)
-	{
-		res = res.substr(i+23,res.length-i-23);
-		var size = dataHex.length;
-		var id = parseInt(dataHex.slice(4,10));
-
-		if(( size == 22) && (id == 4 ))
-		{
-			var dlc = parseInt(dataHex.slice(2,4))-3;
-			var msg =  dataHex.slice(10,10+dlc*2);
-			//console.log('DLC: ' + dlc + '   ID: '+ id +'   MSG: '+ msg);
-
-				motor = parseInt(msg.slice(0,2));
-				io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
-				io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
-
-				temp = parseInt(msg.slice(2,4));
-				io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
-
-				pres = swapEndianness(parseInt(msg.slice(4,12),16));
-				io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
-
-			//console.log('Motor: ' + (motor==1?'ON':'OFF') + '   Temp: '+(temp==1?'ON':'OFF') + '  Pression:'+ pres);
-		}
-	}
+	console.log("Reception de données");
+	can.readCan(data,traitementMsg);
 });
 
+// action sur la communication avec le cr3131
 client.on('close', function() {
 	console.log('Connection closed');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
 });
 client.on('connect', function() {
+	io.emit('CanOK');
 	console.log('Connection etablie');
+	clearInterval(timeoutCR3131);
+	timeoutCR3131 = null;
 });
 client.on('drain', function() {
 	console.log('Connection drain');
 });
+client.on('end', function() {
+	console.log('Fin de connection');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
+});
 client.on('error', function() {
 	console.log('Connection error');
+	io.emit('erreurCan');
+	if(timeoutCR3131 == null)
+		timeoutCR3131 = setTimeout(connectCR3131,20000);
 });
 
-server.listen(3300);
 
-
-// view engine setup
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'pug');
-
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-//app.use(logger('dev'));
 app.use(bodyParser.json());								// communication json
 app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(cookieParser());
 
-//app.use('/', index);
-//app.use('/users', users);
-//app.use('/images', img)
-
+//----------------------Construction des routes -------------------------------------------
+//Page d'accueil
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname+'/index.html'));
 });
 
-app.post('/monterPasserelle', function(req, res){					// Monter passerelle
-	//upState = !upState;
-	//downState = false;
-	upState = req.body.up == "true" ? true : false ;
-	downState = req.body.down == "true" ? true : false ;
-	
-	sendCan(upState,downState);
-	res.send({success:true});
-	io.emit()
-});
-
-app.post('/descendrePasserelle', function(req, res){			// Descendre
-	//upState = false;
-	//downState = !downState;
-	
-	upState = req.body.up == "true" ? true : false ;
-	downState = req.body.down == "true" ? true : false ;
-
-	sendCan(upState,downState);
-	res.send({success:true});
-});
-
-
+//demande d'authentification
 app.post('/authentification', function(req,res){				// Auth admin et utilisateurs tenderlift
 	
 	var usrName = req.body.name;
 	var pwd = req.body.pwd;
 
-	switch (usrName)
-	{
-		case "admin":
-			if(pwd == "admin")
-			{
-				res.send({success:true});
-				authentified = true;
-				numberOfAdmin = 1;
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-			
-		case "jeanJacque":
-			if(pwd == "jeanJacque")
-			{
-				res.send({success:true});
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-		
-		
-		case "Benoit": 
-			if(pwd == "Benoit")
-			{
-				res.send({success:true});
-				break;
-			}
-			else
-			{
-				res.send({success:false});
-				break;
-			}
-	}
+	redis.auth(usrName, pwd, res, callbackAuth);
 });
 
+var callbackAuth = function(statut, res, droit, token, name)
+{
+	console.log("execute le callback Auth");
+	console.log("statut: "+statut+"  ; droit: "+droit+"  ;token: "+token);
+	switch (statut)
+	{
+		case 1:
+			console.log("reponse auth");
+			res.send({"success":true, "token":token, "droit":droit, "name":name});
+			break;
+		case 0:
+			res.send({"success":false, "info":"mot de passe incorrect"});
+			break;
+		default :
+			res.send({"success":false, "info":"erreur serveur"});
+	}
+}
 
-app.post('/invite', function(req, res){				// invite requete
-	var response = req.body.demande;
-	
-	if(response)
+//demande d'authentification entant qu'invité
+app.post('/invite', function(req, res){				// requete invite 
+	console.log("demande de connection invitée");
+	if(socketAdmin != null)
 	{
 		res.send({ success: true });
-		socketAdmin.emit('newInvite', {demande:true});			// on demande a l'admin si on l'accepte
-		socketU.emit('newInvite', {demande:true});
-		
-		console.log("emit");
-		
-		socketAdmin.on('inviteOk', function (data) {		// si admin ok
-			console.log("envoi invite to admin ok");
-			io.emit('inviteOk', {demande:true});		//  on le notifie au client
-		});
-		
-		socketU.on('inviteOk', function (data) {
-			console.log("envoi invite ok");
-			io.emit('inviteOk', {demande:true});
-		});
+		// on demande a l'admin si on l'accepte
+		socketAdmin.emit('newInvite');			
 	}
 	else {
-		//res.send({success:false});
+		res.send({success:false});
 	}
+});
+
+// disconnect client = delete socket and user
+app.post('/decoUser', function(req,res){			
 	
+	var user = req.body.name;
+	
+	console.log("deco :"+user +" (by admin)");
+	redis.closeToken(user);
+	
+	//renvoie le  tableau des utilisateurs mit à jour
+	var users =[];
+	var conexion =[];
+	tabUser2.forEach(function (a){
+		users.push(a.name);
+		conexion.push(a.date);		
+		});
+	res.send({'users':users, 'dateConnexion':conexion});
+	console.log('users: ' +users);
+	console.log('conexion: ' +conexion);
+});
+
+// renvoi le tableau des utilisateurs
+app.get('/users', function(req,res){
+	var users =[];
+	var conexion =[];
+
+	tabUser2.forEach(function (a){
+		users.push(a.name);
+		conexion.push(a.date);		
+		});
+	res.send({'users':users, 'dateConnexion':conexion});
+	console.log('users: ' +users);
+	console.log('conexion: ' +conexion);
 });
 
 
-app.post('/decoUser', function(req,res){			// disconnect client = delete socket and user
+// Quand un client se connecte on l'ajoute à la liste des utilsateur connecté et on enregristre la date de connection
+// Pour un invité on demande à l'admin de valide la connection, sinon la connection est refusé
+//io.sockets.on('connection', function (socket) {
+io.on('connection', function (socket) {
 	
-	var idUser = req.body.id;
-	
-
-	console.log(idUser);
-	
-	var socketU = tabSocket[idUser];
-	
-	delete socketU;
-	delete tabUser[idUser];
-	delete tabConnexion[idUser];
-});
-
-app.post('/deleteLastUser', function(req,res){		// quand l'admin n'accepte pas le client on le suppr car il à été rentré
-	delete tabUser[tabUser.length-1];
-	delete tabConnexion[tabConnexion.lenght-1];
-	delete tabSocket[tabConnexion.lenght-1];
-});
-
-
-app.get('/users', function(req,res){				// renvoi le tableau des invites suite au get
-	var tabUserBis = [];
-	var tabDateBis = [];
-	
-	for(var i = 0; i <tabUser.length; i++)
-	{
-		if(tabUser[i] != null)
-		{
-			tabUserBis.push(tabUser[i]);
-			tabDateBis.push(tabConnexion[i]);
-		}
-	}
-	
-	res.send({users:tabUserBis, dateConnexion:tabDateBis});
-});
-
-
-
-// Quand un client se connecte
-io.sockets.on('connection', function (socket) {
-
-//remplace l'ancien admin
-	if(socket.handshake.query['admin'] == "true")			// on verifie les donnée dans la requete
-	{
-		if(authentified)
-		{
-			if(numberOfAdmin > 0 && socketAdmin != null)
-			{
-				socketAdmin = socket;		//save admin socket
-			}
-			else
-			{
-				socketAdmin = socket;
-				socketAdmin.on('disconnect', function () 
-				{
-					console.log("disconnect admin");
-					numberOfAdmin = 0;				// deco admin
-				});
-			}	
-		}
-	}
-	
-	socketU = socket;
-
-    console.log('Un client est connecté !');
 	var now = new Date();
 	var annee   = now.getFullYear();
 	var mois    = now.getMonth() + 1;
@@ -286,139 +203,246 @@ io.sockets.on('connection', function (socket) {
 	var minute  = now.getMinutes();
 	
 	var dateUser = jour + '/' + mois + '/' + annee + ':' + heure + ':' + minute;
+	var name;
 	
-	var name = "User" + numberOfConnexion;			// name User
+	//Si c'est un invité
+	if(socket.handshake.query['invite'] == "true" )	/* si c'est invite on le rajoute */
+	{
+		//si on a un admin connecté envoie de la demande de connection à celui-ci
+		if(socketAdmin != null)
+		{
+			console.log("connection invité");	
+			
+			//si validation de l'admin, on accepte la connexion de l'invité
+			socketAdmin.once('inviteOk', function (data) {		
+				console.log("envoi invite to admin ok");
+				var token;
+				
+				//Définit un nom unique pour l'invité
+				name = "Invite1";			// name User
+				var r = tabUser2.find(function(a){return a.name === name});
+				var i= 1;
+				while(r != null)
+				{
+					i++;
+					name = "Invite" + i;
+					r = tabUser2.find(function(a){return a.name === name});
+				}
+				
+				redis.setToken(name, valideInvite, socket);
+						
+				var objectU = {'name':name, 'date':dateUser, 'socket':socket, 'droit':2}; //'timeout':timeOut};
+				tabUser2.push(objectU);
+			});
+			socketAdmin.on('inviteNon', function (data) {
+				socket.emit('inviteOkUser', {demande:false});		//  demande de connection en invité refué
+			});				
 
-	if(socketAdmin != null)
-	{
-		socketAdmin.emit('newConnexion', {inviteName:name, dateConnexion:dateUser} );		// notification d'une connexion à l'admin
-	}
-	
-	if(socket.handshake.query['admin'] != "true" && socket.handshake.query['admin'] != "except")	/* si c'est invite on le rajoute */
-	{
-		tabUser.push(name);
-		tabConnexion.push(dateUser);
-		tabSocket.push(socket);
+		}
+		else
+			socket.emit('inviteOkUser', {demande:false});		//  demande de connection en invité refué
+
 		console.log("invite coucou !");
-		numberOfConnexion += 1;
-		
-		setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function (tempo user)
+		// setTimeout(timeoutConnexion, timeOutInvite, socket);		//nom function, delay, arg for function (tempo user)
+	}
+	else
+	{
+		name = socket.handshake.query['name'];			// name User
+		droit = socket.handshake.query['droit'];
+		console.log("connection user: " + name);
+		var r = tabUser2.findIndex(function(a){return a.name === name});
+		if(r == -1)	//utilisateur non connecté
+		{
+			var objectU = {'name':name, 'date':dateUser, 'socket':socket, 'droit':droit}; //'timeout':timeOut};
+			tabUser2.push(objectU);
+		}
+		else
+		{
+			tabUser2[r].date = dateUser;
+			tabUser2[r].socket = socket;
+			tabUser2[r].droit = droit;
+		}
 	}
 	
-	io.emit('update pression', { pression: pres.toString() });
-	io.emit('moteur', {moteur: motor==1?'on':'off' });
-	io.emit('temperature', { temperature: temp==1?'ok':'nok'});
-	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+	//envoie des données CAN
+	updateData();
 	
+	//Operation sur recetion de message socket
+	socket.on('cmd_up', function (msg) {
+		console.log("cmd up passerelle");
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_UP, data);
+		//TDL_UP();
+	});
 	
-	/*var mySqlClient = mysql.createConnection({				// Connexion mysql
-		host     : "localhost",
-		user     : "root",
-		password : "mysql",
-		database : "test"
-	});*/
+	socket.on('cmd_down', function (msg) {
+		console.log("cmd down passerelle");
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_DOWN, data);
+		//TDL_DOWN();
+	});
 	
-	/*var selectQuery = 'SELECT * FROM Users';
- 
-	mySqlClient.query(
-	  selectQuery,
-	  function select(error, results, fields) {
-		if (error) {
-		  console.log(error);
-		  mySqlClient.end();
-		  return;
-		}
-	 
-		if ( results.length > 0 )  { 
-		  var firstResult = results[ 0 ];
-		  console.log('idUsers: ' + firstResult['idUsers']);
-		  console.log('userName: ' + firstResult['userName']);
-		  console.log('userPwd: ' + firstResult['userPwd']);
-		} else {
-		  console.log("Pas de données");
-		}
-		mySqlClient.end();
-	  }
-	);*/
+	socket.on('cmd_stop', function (msg) {
+		console.log("cmd stop passerelle");
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, TDL_STOP, data);
+		//TDL_STOP();
+	});
 	
+	socket.on('isAdmin', function (msg) {
+		console.log("définit le nouveau admin en charge");
+		var data = {'socket':socket}; 
+		redis.checkToken(msg.name, msg.token, setAdmin, data);
+	});
+	
+	socket.on('add_user', function (msg) {
+		console.log("Ajout d'un utilisateur");
+		var data = {'socket':socket, 'new_user':msg.new_user, 'new_pwd':msg.new_pwd }; 
+		redis.checkToken(msg.name, msg.token, addUser, data);
+	});
+
 });
 
-function timeoutConnexion (socket) {			// tempo user function
-  
-  if(socket != null)
-  {
-	  socket.emit('timeoutConnexion', {timeout:true});
-  }
-}
-
-
-function sendCan(UP,DOWN){
-	var up = (UP?1:0).toString(16);
-	var down = (DOWN?1:0).toString(16);
-	var prefix = 0x4305;
-	var id = 1;
-	var suffix = 0x460d;
-	if(up == down)
-		suffix = 0x470d;
-	
-	// compute the required buffer length
-	var bufferSize = 2 + 3 + 2 + 2;
-	var buffer = new Buffer(bufferSize);
-
-	// store first byte on index 0;
-	buffer.writeUInt16BE(prefix, 0);
-	buffer.writeUIntBE(id, 2, 3);
-	buffer.writeUIntBE(up, 5, 1);
-	buffer.writeUIntBE(down, 6, 1);
-	buffer.writeUIntBE(suffix, 7, 2);
-
-	client.write(buffer,'data');
-	console.log('Send    : ' + buffer.toString('hex'));
-}
-
-function swapEndianness(v)
+function setAdmin(parametre)
 {
-	var s = v.toString(16);             // translate to hexadecimal notation
-	s = s.replace(/^(.(..)*)$/, "0$1"); // add a leading zero if needed
-	var a = s.match(/../g);             // split number in groups of two
-	a.reverse();                        // reverse the groups
-	var s2 = a.join("");                // join the groups back together
-	var v2 = parseInt(s2, 16);          // convert to a number
-	return v2;
+	console.log("new admin set");
+	if (parametre.socket == null)
+		return;
+	if(socketAdmin != null)
+			socketAdmin = parametre.socket;		//save admin socket
+
+	//enregistrement de l'utilisateur en tant qu'admin
+	else
+	{
+		socketAdmin = parametre.socket;
+		socketAdmin.on('disconnect', function () 
+		{
+			console.log("disconnect admin");
+			socketAdmin = null;
+		});
+	}
 }
 
+function addUser(parametre)
+{
+	redis.createUser(parametre.new_user , parametre.new_pwd, droit = 2, confirmeAddUser, parametre.socket)
+}
 
-// catch 404 and forward to error handler
-/*app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+function confirmeAddUser(OK, socket)
+{
+	if (socket == null)
+		return;
+	else if (OK)
+		socket.emit('add_user_OK', {'ok':1});		
+	else
+		socket.emit('add_user_OK', {'ok':0});		
+}
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+function valideInvite(statut, socket, token, user)
+{
+	//  si token créé, on le notifie au client que la connection est accepté
+	if (statut ==1)
+		socket.emit('inviteOkUser', {'demande':true, 'token':token, 'name':user});		
+	else{
+		socket.emit('inviteOkUser', {'demande':false});		
+		console.log("erreur création token invité: "+user);
+		
+		var id = tabUser2.findIndex(function(a){return a.name === user});
+		if(id != -1){
+			tabUser2.splice(id,1);		//on suprime l'élément du tableau		
+		}
+	}
+		
+}
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-var FS = require('q-io/fs');
-var HTTP = require('q-io/http');
+// tempo user function
+function timeoutConnexion(user, parametre) 
+{
+	if (parametre.action == 1)
+	{
+		var id = tabUser2.findIndex(function(a){return a.name === user});
+		if(id != -1){
+			console.log("user: "+user+" deco");
+			if(tabUser2[id].socket != null){
+				tabUser2[id].socket.emit('timeoutConnexion', {timeout:true});
+			}
+			tabUser2.splice(id,1);		//on suprime l'élément du tableau
+		}
+		else
+			console.log("user: "+user+" non enregristré");
+	}
+	else
+		parametre.socket.emit('timeoutConnexion', {timeout:true});
+	
+}
 
-FS.makeTree('/tmp/foo/bar/baz').then(function() {
-  console.log('Path created!');
-});
+//Envoie les commande de controle du tenderlift
+//Parametre :
+//	- up 		: boolean
+//	- down 	: boolean
+function sendCMD(up,down)
+{
+	var data =[];
+	data[0] = {type: 'bool', value:up};
+	data[1] = {type: 'bool', value:down};
+	var msg = Buffer.from(can.buildMsg(10,data));
+	console.log('Send    : ' + msg.toString('hex'));
+	client.write(msg,'data');
+}
 
-HTTP.read('http://www.myapifilms.com/imdb?name=Julianne+Moore&filmography=1')
-.then(function(data) {
-  var movies = _.findWhere(data.filmographies, { section: 'Actress' });
-  movies = _.map(movies, function(m) {
-    return m.title + ' (' + m.year + ')';
-  });
-  console.log(movies);
-});*/
+function TDL_UP(){
+	upState = true;
+	downState = false;
+	sendCMD(true,false);
+}
+function TDL_DOWN(){
+	upState = false;
+	downState = true;
+	sendCMD(false,true);
+}
+function TDL_STOP(){
+	upState = false;
+	downState = false;
+	sendCMD(false,false);
+}
 
-module.exports = app;
+//mise a jour des donnée coté client via socket.io
+function updateData(){
+	io.emit('update pression', { pression: pres.toString() });
+	io.emit('update amp', { amperage: amp.toString() });
+	io.emit('moteur', {moteur: motor==1?'on':'off' });
+	//io.emit('temperature', { temperature: temp==1?'ok':'nok'});
+	io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+}
+
+//traitement des messages CAN reçut
+var traitementMsg = function(msg,id)
+{
+	switch (id){
+		case 4:
+		{
+			motor = parseInt(msg.slice(0,2));
+			io.emit('moteur', {for: 'everyone', moteur: motor==1?'on':'off' });
+			upState = parseInt(msg.slice(2,4));
+			downState = parseInt(msg.slice(4,6));
+			io.emit('tenderlift', { position: motor==0?'droit':upState?'montee':'descente'});
+
+			// temp = parseInt(msg.slice(2,4));
+			// io.emit('temperature', {for: 'everyone', temperature: temp==1?'ok':'nok'});
+
+			pres = parseInt(can.swapEndianness(msg.slice(6,10)),16);
+			io.emit('update pression', {for: 'everyone',  pression: pres.toString() });
+			
+			amp = parseInt(can.swapEndianness(msg.slice(10,14)),16);
+			io.emit('update amp', {for: 'everyone', amperage: amp.toString() });
+
+			console.log('Motor: ' + (motor==1?'ON':'OFF') + '  Pression:'+ pres + '  Intesité:' +amp);
+			break;
+		}
+		default :
+		{
+			console.log("id du message: "+id+" n'est pas traité.");
+		}
+	}
+};
+
