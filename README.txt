@@ -20,12 +20,12 @@ Récupèration dépot git:
 mise à jour du depot git:
 	git pull
 Charge la version désiré	
-	git checkout V2.0.2	(incompatibilité linux)
+	git checkout master
 
 On se deplace dans le dossier du projet:
 	cd ProjetIndus
 puis on met à jour les module nodejs suivant (pour des résont de compatibilité système:
-	npm install crypto redis express path serve-favicon body-parser net fs https
+	npm install crypto redis express path serve-favicon body-parser net fs https socket.io
 (les modules sont fournies dans le projet git. )
 
 
