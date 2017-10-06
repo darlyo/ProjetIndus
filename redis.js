@@ -27,8 +27,9 @@ function setCallbackToken(callback)
 
 //activation de la reception des evenements ur les expirations
 //subscrition à différant mot clef
-function init(clear = false)
+function init(clear)
 {
+	clear = typeof clear  !== 'undefined' ?  clear  : false;
 	if (clear)	//vide la BD
 		client.flushall();
 
@@ -40,8 +41,11 @@ function init(clear = false)
 
 // création d'un nouveau utilisateur
 // droit  1= admin 		2= user
-function createUser(name, pwd, droit = 2, callback, socket=null)
+function createUser(name, pwd, droit, callback, socket)
 {
+	droit = typeof droit  !== 'undefined' ?  droit  : 2;
+	socket = typeof socket  !== 'undefined' ?  socket  : null;
+
 	client.exists("user:"+name, function(err, existe){
 		console.log("client "+name+" existe: "+existe);
 		//si l'ulitilisateur n'existe pas on le crée
@@ -145,8 +149,11 @@ function getDroit(name, callback)
 //creation d'un token pour identifier un ulitilisateur connecté et
 // vérifié la durée de vie de la connexion
 // default: session de 5min
-function setToken(name, callback, socket, time=300, size = 20)
+function setToken(name, callback, socket, time, size)
 {
+	time = typeof time  !== 'undefined' ?  time  : 300;
+	size = typeof size  !== 'undefined' ?  size  : 20;
+
 	const buf = randomAsciiString(size);
 	var statut = -1;
 
@@ -187,8 +194,10 @@ function getToken(user, callback)
 	});
 }
 
-function checkToken(user, token, callback, parametre=null)
+function checkToken(user, token, callback, parametre)
 {
+	parametre = typeof parametre  !== 'undefined' ?  parametre  : null;
+
 	client.get("token:"+user, function (err, replie) {
 		console.log("get token:"+user+"  :"+replie + " = " +token);
 		if (replie == null)
@@ -206,8 +215,10 @@ function checkToken(user, token, callback, parametre=null)
 }
 
 //Demande de fermeture d'une connexion
-function closeToken(user, callbackT = callbackToken)
+function closeToken(user, callbackT)
 {
+	callbackT = typeof callbackT  !== 'undefined' ?  callbackT  : callbackToken;
+
 	console.log("Token user: " + user +" close");
 	client.del("token:"+user, redis.print);
 	client.lrem("user_co", 0, user);
