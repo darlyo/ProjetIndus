@@ -33,7 +33,10 @@ function swapEndianness(v)
 // Retourne un nombre sous sa forme binaire en 32bits
 // Parametre : un entier entre -2147483648 and 2147483647
 // Return : une string de l'entier en bianire
-function createBinaryString (nMask, size = 32) {
+function createBinaryString (nMask, size) {
+
+	size = typeof size  !== 'undefined' ?  size  : 32;
+
 	for (var nFlag = 0, nShifted = nMask, sMask = ""; nFlag < 32;
 		nFlag++, sMask += String(nShifted >>> 31), nShifted <<= 1);
 	console.log(sMask);
